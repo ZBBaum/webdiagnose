@@ -1,4 +1,5 @@
-import { chromium } from "playwright-core";
+import chromium from "@sparticuz/chromium-min";
+import puppeteer from "puppeteer-core";
 
 export interface ScrapedPage {
   url: string;
@@ -18,34 +19,37 @@ export interface ScrapedPage {
   meta: { description: string | null; keywords: string | null };
 }
 
-async function getLaunchOptions(): Promise<{ executablePath: string; args: string[] }> {
+const CHROMIUM_REMOTE_URL =
+  "https://github.com/Sparticuz/chromium/releases/download/v123.0.1/chromium-v123.0.1-pack.tar";
+
+async function getLaunchOptions() {
   if (process.env.VERCEL) {
-    // @sparticuz/chromium bundles a Linux x86_64 binary for serverless environments.
-    const sparticuz = await import("@sparticuz/chromium");
     return {
-      executablePath: await sparticuz.default.executablePath(),
-      args: sparticuz.default.args,
+      args: chromium.args,
+      executablePath: await chromium.executablePath(CHROMIUM_REMOTE_URL),
+      headless: true,
     };
   }
-  // Local dev: use CHROMIUM_PATH override or playwright-core's managed chromium.
-  // Run `npx playwright install chromium` once if the managed binary is missing.
   return {
-    executablePath: process.env.CHROMIUM_PATH || chromium.executablePath(),
+    executablePath:
+      process.env.CHROMIUM_PATH ||
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     args: [],
+    headless: true,
+    defaultViewport: null,
   };
 }
 
 export async function scrapePage(url: string): Promise<ScrapedPage> {
-  const { executablePath, args } = await getLaunchOptions();
-  const browser = await chromium.launch({ executablePath, args, headless: true });
-  const context = await browser.newContext({
-    userAgent:
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  });
-  const page = await context.newPage();
+  const options = await getLaunchOptions();
+  const browser = await puppeteer.launch(options);
+  const page = await browser.newPage();
+  await page.setUserAgent(
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+  );
 
   try {
-    await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
 
     const result = await page.evaluate(() => {
       const isVisible = (el: Element): boolean => {
@@ -58,10 +62,8 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
       const getText = (el: Element) =>
         ((el as HTMLElement).innerText ?? el.textContent ?? "").trim().replace(/\s+/g, " ");
 
-      // Title
       const title = document.title;
 
-      // Headings
       const headings: { level: number; text: string }[] = [];
       document.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((el) => {
         if (isVisible(el)) {
@@ -71,7 +73,6 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
         }
       });
 
-      // Body text (paragraphs, list items, spans with meaningful text)
       const bodyText: string[] = [];
       document.querySelectorAll("p, li, td, th, blockquote, figcaption").forEach((el) => {
         if (isVisible(el)) {
@@ -80,7 +81,6 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
         }
       });
 
-      // Buttons
       const buttons: string[] = [];
       document.querySelectorAll("button, [role='button'], input[type='submit'], input[type='button']").forEach((el) => {
         if (isVisible(el)) {
@@ -93,7 +93,6 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
         }
       });
 
-      // Nav items
       const navItems: string[] = [];
       document.querySelectorAll("nav a, [role='navigation'] a, header a").forEach((el) => {
         if (isVisible(el)) {
@@ -102,7 +101,6 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
         }
       });
 
-      // Form fields — find associated label text
       const formFields: {
         type: string;
         name: string | null;
@@ -131,13 +129,13 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
           if (!label) {
             label =
               input.getAttribute("aria-label") ||
-              input.getAttribute("aria-labelledby")
+              (input.getAttribute("aria-labelledby")
                 ? getText(
                     document.getElementById(
                       input.getAttribute("aria-labelledby")!
                     ) ?? document.createElement("span")
                   )
-                : null;
+                : null);
           }
 
           formFields.push({
@@ -149,7 +147,6 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
           });
         });
 
-      // Links
       const links: { text: string; href: string }[] = [];
       document.querySelectorAll("a[href]").forEach((el) => {
         if (isVisible(el)) {
@@ -161,7 +158,6 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
         }
       });
 
-      // Meta
       const metaDesc = document.querySelector('meta[name="description"]');
       const metaKw = document.querySelector('meta[name="keywords"]');
 
