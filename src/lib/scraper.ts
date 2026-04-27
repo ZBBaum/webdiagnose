@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { chromium } from "playwright-core";
 
 export interface ScrapedPage {
   url: string;
@@ -18,8 +18,26 @@ export interface ScrapedPage {
   meta: { description: string | null; keywords: string | null };
 }
 
+async function getLaunchOptions(): Promise<{ executablePath: string; args: string[] }> {
+  if (process.env.VERCEL) {
+    // @sparticuz/chromium bundles a Linux x86_64 binary for serverless environments.
+    const sparticuz = await import("@sparticuz/chromium");
+    return {
+      executablePath: await sparticuz.default.executablePath(),
+      args: sparticuz.default.args,
+    };
+  }
+  // Local dev: use CHROMIUM_PATH override or playwright-core's managed chromium.
+  // Run `npx playwright install chromium` once if the managed binary is missing.
+  return {
+    executablePath: process.env.CHROMIUM_PATH || chromium.executablePath(),
+    args: [],
+  };
+}
+
 export async function scrapePage(url: string): Promise<ScrapedPage> {
-  const browser = await chromium.launch({ headless: true });
+  const { executablePath, args } = await getLaunchOptions();
+  const browser = await chromium.launch({ executablePath, args, headless: true });
   const context = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
