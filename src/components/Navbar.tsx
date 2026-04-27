@@ -19,7 +19,13 @@ export default function Navbar() {
           </div>
           <span className="text-sm font-semibold tracking-tight">WebDiagnose</span>
         </a>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <a
+            href="/pricing"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Pricing
+          </a>
           <ThemeToggle />
           <UserMenu />
         </div>
