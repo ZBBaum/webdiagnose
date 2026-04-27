@@ -1,66 +1,75 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { Input } from "@/components/ui/input";
+
+const PILLS = [
+  { icon: "⚡", label: "15 second analysis" },
+  { icon: "◈", label: "6 conversion pillars" },
+  { icon: "—", label: "No signup required" },
+];
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
+    <main className="min-h-[calc(100vh-60px)] flex items-center justify-center px-6 py-16">
+      <div className="w-full max-w-lg flex flex-col items-center text-center gap-7">
+
+        {/* eyebrow badge */}
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800 tracking-wide">
+          <span className="size-1.5 rounded-full bg-violet-500 shrink-0" />
+          AI-Powered CRO Analysis
+        </span>
+
+        {/* headline */}
+        <h1 className="text-5xl font-bold tracking-tight leading-[1.12] text-foreground">
+          Diagnose what&apos;s killing
+          <br className="hidden sm:block" />
+          {" "}your{" "}
+          <span className="bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent">
+            conversions
+          </span>
+        </h1>
+
+        {/* subtitle */}
+        <p className="text-base text-muted-foreground leading-relaxed max-w-sm">
+          Paste any URL and get an instant audit across 6 conversion pillars —
+          powered by Claude AI.
+        </p>
+
+        {/* feature pills */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {PILLS.map(({ icon, label }) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
+              <span className="text-[10px] opacity-60">{icon}</span>
+              {label}
+            </span>
+          ))}
+        </div>
+
+        {/* form card */}
+        <div className="w-full bg-card rounded-2xl border border-border shadow-md p-4">
+          <form action="/results" method="GET" className="flex gap-2">
+            <Input
+              name="url"
+              type="url"
+              placeholder="https://yoursite.com"
+              required
+              autoFocus
+              className="flex-1 h-11 text-sm px-4 rounded-xl bg-background"
+            />
+            <button
+              type="submit"
+              className="h-11 px-5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-semibold hover:from-violet-700 hover:to-blue-700 transition-all shrink-0 cursor-pointer whitespace-nowrap"
             >
-              Learning
-            </a>{" "}
-            center.
+              Analyze →
+            </button>
+          </form>
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            No account needed · Powered by Claude AI · Results in ~15 seconds
           </p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+      </div>
+    </main>
   );
 }

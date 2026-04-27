@@ -1,0 +1,34 @@
+import { supabase } from "./supabase";
+import type { AuditResult } from "./auditor";
+
+export type AuditRecord = {
+  id: string;
+  url: string;
+  overall_grade: string;
+  pillar_scores: AuditResult["pillars"];
+  created_at: string;
+};
+
+export async function saveAudit(
+  url: string,
+  audit: AuditResult,
+  userId?: string | null
+): Promise<void> {
+  const { error } = await supabase.from("audits").insert({
+    url,
+    overall_grade: audit.grade,
+    pillar_scores: audit.pillars,
+    user_id: userId ?? null,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function getAuditHistory(userId: string): Promise<AuditRecord[]> {
+  const { data, error } = await supabase
+    .from("audits")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data as AuditRecord[];
+}

@@ -1,0 +1,177 @@
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+
+/* ── Report header ── */
+.reportHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 3rem;
+}
+
+.gradeCircle {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 2.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.gradeLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.auditedUrl {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 520px;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+.back {
+  font-size: 0.85rem;
+  color: #b0bac7;
+  margin-top: 0.25rem;
+  transition: color 0.15s;
+}
+
+.back:hover {
+  color: var(--fg);
+}
+
+/* ── Card grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+/* ── Pillar card ── */
+.card {
+  background: #ffffff;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-left: 4px solid transparent;
+  border-radius: 12px;
+  padding: 1.4rem 1.4rem 1.4rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.pillarName {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+  margin-bottom: 0.6rem;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin-bottom: 0.6rem;
+}
+
+.scoreNum {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--fg);
+}
+
+.scoreMax {
+  font-size: 0.95rem;
+  color: #b0bac7;
+}
+
+/* ── Progress bar ── */
+.progressTrack {
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ── Summary ── */
+.summary {
+  font-size: 0.845rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+/* ── Fixes ── */
+.fixes {
+  list-style: none;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.fix {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.81rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.arrow {
+  color: #b0bac7;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 780px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gradeCircle {
+    width: 110px;
+    height: 110px;
+    font-size: 3.25rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page {
+    padding: 2rem 1rem 4rem;
+  }
+}
