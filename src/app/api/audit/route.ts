@@ -3,6 +3,7 @@ import { scrapePage } from "@/lib/scraper";
 import { auditPage } from "@/lib/auditor";
 import { saveAudit } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -12,11 +13,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "url parameter is required" }, { status: 400 });
   }
   try {
+    const supabase = await createSupabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { allowed, error: rateLimitError } = await checkRateLimit(request, user?.id ?? null);
+    if (!allowed) {
+      return NextResponse.json({ error: rateLimitError }, { status: 429 });
+    }
+
     const scraped = await scrapePage(url);
     const audit = await auditPage(scraped);
-
-    const supabase = await createSupabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
 
     saveAudit(url, audit, user?.id ?? null).catch((err) =>
       console.error("[saveAudit]", err instanceof Error ? err.message : err)

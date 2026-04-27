@@ -9,3 +9,9 @@ create table audits (
 
 -- Run this if the table already exists:
 -- alter table audits add column user_id uuid references auth.users(id);
+
+create table rate_limits (
+  identifier text primary key,
+  count      integer     not null default 0,
+  reset_at   timestamptz not null
+);
