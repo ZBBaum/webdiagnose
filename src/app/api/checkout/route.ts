@@ -7,9 +7,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 
-  const { lookupKey } = PLANS[plan];
-  const { data: prices } = await stripe.prices.list({ lookup_keys: [lookupKey], limit: 1 });
-  if (!prices.length) {
+  const priceId = PLANS[plan].priceId();
+  if (!priceId) {
     return NextResponse.json({ error: "Price not configured" }, { status: 500 });
   }
 
@@ -19,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    line_items: [{ price: prices[0].id, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${baseUrl}/success?plan=${plan}`,
     cancel_url: `${baseUrl}/pricing`,
   });
