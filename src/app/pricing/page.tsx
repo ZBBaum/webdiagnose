@@ -3,17 +3,18 @@ import { cn } from "@/lib/utils";
 
 const PLANS = [
   {
+    variant: "free" as const,
     name: "Free",
     price: null,
     description: "Try it out, no strings attached.",
     features: ["1 audit per day", "Single page per audit", "No history saved"],
     cta: "Get started free",
     href: "/",
-    highlight: false,
   },
   {
+    variant: "pro" as const,
     name: "Pro",
-    price: 19,
+    price: "19.99",
     description: "For founders and marketers serious about conversion.",
     features: [
       "10 audits per day",
@@ -21,13 +22,13 @@ const PLANS = [
       "Score history",
       "PDF export",
     ],
-    cta: "Start Pro — $19/mo",
+    cta: "Start Pro — $19.99/mo",
     href: "/api/checkout?plan=pro",
-    highlight: true,
   },
   {
+    variant: "agency" as const,
     name: "Agency",
-    price: 49,
+    price: "49.99",
     description: "Built for teams running audits at scale.",
     features: [
       "Unlimited audits",
@@ -35,9 +36,8 @@ const PLANS = [
       "Team seats",
       "Priority support",
     ],
-    cta: "Start Agency — $49/mo",
+    cta: "Start Agency — $49.99/mo",
     href: "/api/checkout?plan=agency",
-    highlight: false,
   },
 ];
 
@@ -63,76 +63,121 @@ export default function PricingPage() {
 
       {/* plan grid */}
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-        {PLANS.map((plan) => (
-          <div
-            key={plan.name}
-            className={cn(
-              "relative flex flex-col rounded-2xl border p-7 gap-6",
-              plan.highlight
-                ? "border-violet-400 shadow-lg shadow-violet-100 dark:shadow-violet-950/30 bg-card"
-                : "border-border bg-card"
-            )}
-          >
-            {plan.highlight && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-sm">
-                  Most popular
-                </span>
-              </div>
-            )}
+        {PLANS.map((plan) => {
+          const isAgency = plan.variant === "agency";
+          const isPro = plan.variant === "pro";
 
-            {/* name + price */}
-            <div className="space-y-1">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                {plan.name}
-              </p>
-              <div className="flex items-baseline gap-1">
-                {plan.price !== null ? (
-                  <>
-                    <span className="text-4xl font-extrabold text-foreground">
-                      ${plan.price}
-                    </span>
-                    <span className="text-sm text-muted-foreground">/mo</span>
-                  </>
-                ) : (
-                  <span className="text-4xl font-extrabold text-foreground">Free</span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed pt-0.5">
-                {plan.description}
-              </p>
-            </div>
-
-            {/* features */}
-            <ul className="flex-1 space-y-2.5">
-              {plan.features.map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-sm text-foreground">
-                  <Check
-                    size={15}
-                    className={cn(
-                      "mt-0.5 shrink-0",
-                      plan.highlight ? "text-violet-500" : "text-emerald-500"
-                    )}
-                  />
-                  {f}
-                </li>
-              ))}
-            </ul>
-
-            {/* cta */}
-            <a
-              href={plan.href}
+          const cardInner = (
+            <div
               className={cn(
-                "inline-flex items-center justify-center h-11 rounded-xl text-sm font-semibold transition-all",
-                plan.highlight
-                  ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white hover:from-violet-700 hover:to-blue-700 shadow-sm"
-                  : "border border-border bg-background hover:bg-muted text-foreground"
+                "relative flex flex-col h-full rounded-2xl p-7 gap-6",
+                isAgency
+                  ? "bg-[#0d0d12] text-white"
+                  : "bg-card text-foreground border border-border",
+                isPro && "border-violet-400 shadow-lg shadow-violet-100 dark:shadow-violet-950/30"
               )}
             >
-              {plan.cta}
-            </a>
-          </div>
-        ))}
+              {/* badge */}
+              {isPro && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-sm whitespace-nowrap">
+                    Most popular
+                  </span>
+                </div>
+              )}
+              {isAgency && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-amber-400 to-orange-400 text-black shadow-sm whitespace-nowrap">
+                    ✦ Best value
+                  </span>
+                </div>
+              )}
+
+              {/* name + price */}
+              <div className="space-y-1">
+                <p className={cn(
+                  "text-xs font-bold uppercase tracking-widest",
+                  isAgency ? "text-white/50" : "text-muted-foreground"
+                )}>
+                  {plan.name}
+                </p>
+                <div className="flex items-baseline gap-1">
+                  {plan.price !== null ? (
+                    <>
+                      <span className={cn(
+                        "text-4xl font-extrabold",
+                        isAgency ? "text-white" : "text-foreground"
+                      )}>
+                        ${plan.price}
+                      </span>
+                      <span className={cn(
+                        "text-sm",
+                        isAgency ? "text-white/50" : "text-muted-foreground"
+                      )}>/mo</span>
+                    </>
+                  ) : (
+                    <span className="text-4xl font-extrabold text-foreground">Free</span>
+                  )}
+                </div>
+                <p className={cn(
+                  "text-xs leading-relaxed pt-0.5",
+                  isAgency ? "text-white/60" : "text-muted-foreground"
+                )}>
+                  {plan.description}
+                </p>
+              </div>
+
+              {/* features */}
+              <ul className="flex-1 space-y-2.5">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm">
+                    <Check
+                      size={15}
+                      className={cn(
+                        "mt-0.5 shrink-0",
+                        isAgency ? "text-amber-400" : isPro ? "text-violet-500" : "text-emerald-500"
+                      )}
+                    />
+                    <span className={isAgency ? "text-white/80" : "text-foreground"}>
+                      {f}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* cta */}
+              <a
+                href={plan.href}
+                className={cn(
+                  "inline-flex items-center justify-center h-11 rounded-xl text-sm font-semibold transition-all",
+                  isAgency
+                    ? "bg-gradient-to-r from-amber-400 to-orange-400 text-black hover:from-amber-300 hover:to-orange-300 shadow-md shadow-amber-900/30"
+                    : isPro
+                    ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white hover:from-violet-700 hover:to-blue-700 shadow-sm"
+                    : "border border-border bg-background hover:bg-muted text-foreground"
+                )}
+              >
+                {plan.cta}
+              </a>
+            </div>
+          );
+
+          if (isAgency) {
+            return (
+              <div
+                key={plan.name}
+                className="relative rounded-2xl p-[1.5px] shadow-[0_0_50px_-8px_rgba(139,92,246,0.5)]"
+                style={{
+                  background: "linear-gradient(135deg, #7c3aed, #3b82f6, #06b6d4)",
+                }}
+              >
+                {cardInner}
+              </div>
+            );
+          }
+
+          return <div key={plan.name}>{cardInner}</div>;
+        })}
       </div>
 
       <p className="text-xs text-muted-foreground">
