@@ -6,7 +6,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your WebDiagnose account</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your SiteIQ account</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <LoginForm />

@@ -10,7 +10,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "WebDiagnose",
+  title: "SiteIQ",
   description: "Instant CRO audits for any website",
 };
 

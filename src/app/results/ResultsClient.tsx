@@ -85,7 +85,7 @@ function LoadingView({ progress }: { progress: number }) {
               <path d="M2 4L6 13L9 7L12 13L16 4" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <span className="text-sm font-semibold text-foreground">WebDiagnose</span>
+          <span className="text-sm font-semibold text-foreground">SiteIQ</span>
         </div>
 
         {/* progress */}
@@ -177,8 +177,21 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
   return (
     <div className="min-h-screen bg-background">
 
+      {/* print-only header */}
+      <div className="hidden print:flex items-center justify-between px-8 py-5 border-b border-gray-200">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-[8px] bg-gradient-to-br from-violet-600 to-blue-500 flex items-center justify-center shrink-0">
+            <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+              <path d="M2 4L6 13L9 7L12 13L16 4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <span className="text-sm font-semibold">SiteIQ Audit Report</span>
+        </div>
+        <span className="text-xs text-gray-500 truncate max-w-sm">{url}</span>
+      </div>
+
       {/* sticky summary bar */}
-      <div className="sticky top-[60px] z-40 bg-background/90 backdrop-blur-sm border-b border-border">
+      <div className="sticky top-[60px] z-40 bg-background/90 backdrop-blur-sm border-b border-border print:hidden">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <span className={cn("shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold border", gradeMeta.badge)}>
@@ -190,7 +203,12 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
             <a href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
               ← New audit
             </a>
-            <Button variant="outline" size="sm" className="text-xs cursor-not-allowed opacity-60">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs cursor-pointer"
+              onClick={() => window.print()}
+            >
               Export PDF
             </Button>
           </div>

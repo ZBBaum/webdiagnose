@@ -8,7 +8,7 @@ export default function Loading() {
               <path d="M2 4L6 13L9 7L12 13L16 4" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <span className="text-sm font-semibold text-foreground">WebDiagnose</span>
+          <span className="text-sm font-semibold text-foreground">SiteIQ</span>
         </div>
         <div className="w-full space-y-3.5">
           <h2 className="text-lg font-semibold text-foreground">Analyzing your site</h2>

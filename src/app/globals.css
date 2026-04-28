@@ -139,6 +139,43 @@ a {
   to   { width: 95%; }
 }
 
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Kill sticky/backdrop so layout is static */
+  .sticky {
+    position: static !important;
+  }
+
+  /* Single-column layout — sidebar stacks above pillar cards */
+  .lg\:grid-cols-\[280px_1fr\] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Keep cards together — no mid-card page breaks */
+  [class*="rounded-2xl"],
+  [class*="rounded-xl"] {
+    break-inside: avoid;
+  }
+
+  /* Remove backdrop blur and translucent backgrounds */
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+  }
+
+  [class*="bg-background\/"] {
+    background-color: white !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
