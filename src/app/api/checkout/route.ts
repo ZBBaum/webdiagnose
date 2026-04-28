@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe, PLANS, type PlanId } from "@/lib/stripe";
 
+// Redirects to Stripe Checkout for the given plan (pro or agency)
 export async function GET(request: NextRequest) {
   const plan = request.nextUrl.searchParams.get("plan") as PlanId | null;
   if (!plan || !(plan in PLANS)) {
