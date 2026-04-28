@@ -2,7 +2,7 @@ import SiteIQLogo from "@/components/SiteIQLogo";
 
 export default function Loading() {
   return (
-    <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6 bg-background">
+    <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6">
       <div className="flex flex-col items-center gap-10 w-full max-w-xs text-center">
         <div className="flex flex-col items-center gap-3">
           <SiteIQLogo size={48} className="shadow-lg" />

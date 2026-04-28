@@ -76,7 +76,7 @@ function LoadingView({ progress }: { progress: number }) {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6 bg-background">
+    <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6">
       <div className="flex flex-col items-center gap-10 w-full max-w-xs text-center">
 
         {/* logo */}
@@ -172,7 +172,7 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
   const issues = sorted.filter((p) => p.score < 6).slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
 
       {/* print-only header */}
       <div className="hidden print:flex items-center justify-between px-8 py-5 border-b border-gray-200">
