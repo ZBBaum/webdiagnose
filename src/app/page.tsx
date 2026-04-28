@@ -2,8 +2,8 @@ import { Input } from "@/components/ui/input";
 
 const PILLS = [
   { icon: "⚡", label: "15 second analysis" },
-  { icon: "◈", label: "6 conversion pillars" },
-  { icon: "—", label: "No signup required" },
+  { icon: "◆", label: "6 conversion pillars" },
+  { icon: "✦", label: "No signup required" },
 ];
 
 export default function Home() {
@@ -19,18 +19,17 @@ export default function Home() {
 
         {/* headline */}
         <h1 className="text-5xl font-bold tracking-tight leading-[1.12] text-foreground">
-          Diagnose what&apos;s killing
-          <br className="hidden sm:block" />
-          {" "}your{" "}
+          More visitors. More{" "}
           <span className="bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent">
-            conversions
+            conversions.
           </span>
+          <br className="hidden sm:block" />
+          {" "}Better results.
         </h1>
 
         {/* subtitle */}
         <p className="text-base text-muted-foreground leading-relaxed max-w-sm">
-          Paste any URL and get an instant audit across 6 conversion pillars —
-          powered by Claude AI.
+          Paste any URL and get an instant audit across 6 conversion pillars.
         </p>
 
         {/* feature pills */}
@@ -65,7 +64,7 @@ export default function Home() {
             </button>
           </form>
           <p className="mt-3 text-[11px] text-muted-foreground">
-            No account needed · Powered by Claude AI · Results in ~15 seconds
+            No account needed · Results in ~15 seconds
           </p>
         </div>
 
