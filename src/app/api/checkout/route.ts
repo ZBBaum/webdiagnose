@@ -3,6 +3,9 @@ import { getStripe, PLANS, type PlanId } from "@/lib/stripe";
 
 // Redirects to Stripe Checkout for the given plan (pro or agency)
 export async function GET(request: NextRequest) {
+  console.log("[checkout] STRIPE_PRO_PRICE_ID:", process.env.STRIPE_PRO_PRICE_ID);
+  console.log("[checkout] STRIPE_AGENCY_PRICE_ID:", process.env.STRIPE_AGENCY_PRICE_ID);
+
   const plan = request.nextUrl.searchParams.get("plan") as PlanId | null;
   if (!plan || !(plan in PLANS)) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
