@@ -9,7 +9,7 @@ export default async function SuccessPage({
   const planName = plan && plan in PLANS ? PLANS[plan as PlanId].name : "Pro";
 
   return (
-    <main className="min-h-[calc(100vh-60px)] flex items-center justify-center px-6">
+    <main className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6">
       <div className="flex flex-col items-center gap-6 text-center max-w-sm">
         <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 text-2xl">
           ✓

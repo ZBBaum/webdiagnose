@@ -8,7 +8,7 @@ const PILLS = [
 
 export default function Home() {
   return (
-    <main className="min-h-[calc(100vh-60px)] flex items-center justify-center px-6 py-16">
+    <main className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-lg flex flex-col items-center text-center gap-7">
 
         {/* eyebrow badge */}

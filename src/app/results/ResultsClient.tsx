@@ -76,7 +76,7 @@ function LoadingView({ progress }: { progress: number }) {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-60px)] flex items-center justify-center px-6 bg-background">
+    <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6 bg-background">
       <div className="flex flex-col items-center gap-10 w-full max-w-xs text-center">
 
         {/* logo */}
@@ -184,7 +184,7 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
       </div>
 
       {/* sticky summary bar */}
-      <div className="sticky top-[60px] z-40 bg-background/90 backdrop-blur-sm border-b border-border print:hidden">
+      <div className="sticky top-[76px] z-40 bg-background/90 backdrop-blur-sm border-b border-border print:hidden">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <span className={cn("shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold border", gradeMeta.badge)}>
@@ -344,7 +344,7 @@ export default function ResultsClient({ url }: { url: string }) {
 
   if (phase === "error") {
     return (
-      <div className="min-h-[calc(100vh-60px)] flex items-center justify-center px-6">
+      <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6">
         <div className="flex flex-col items-center gap-4 text-center max-w-sm">
           <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold">✕</div>
           <h2 className="text-lg font-semibold">Audit failed</h2>

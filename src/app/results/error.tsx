@@ -10,7 +10,7 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-[calc(100vh-60px)] flex items-center justify-center px-6">
+    <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6">
       <div className="flex flex-col items-center gap-4 text-center max-w-sm">
         <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-lg">
           ✕

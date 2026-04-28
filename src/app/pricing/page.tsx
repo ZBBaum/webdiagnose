@@ -43,7 +43,7 @@ const PLANS = [
 
 export default function PricingPage() {
   return (
-    <main className="min-h-[calc(100vh-60px)] flex flex-col items-center px-6 py-16 gap-12">
+    <main className="min-h-[calc(100vh-76px)] flex flex-col items-center px-6 py-16 gap-12">
       {/* header */}
       <div className="flex flex-col items-center gap-4 text-center max-w-xl">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800 tracking-wide">
