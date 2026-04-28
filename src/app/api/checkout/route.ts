@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, PLANS, type PlanId } from "@/lib/stripe";
+import { getStripe, PLANS, type PlanId } from "@/lib/stripe";
 
 export async function GET(request: NextRequest) {
   const plan = request.nextUrl.searchParams.get("plan") as PlanId | null;
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const proto = host.startsWith("localhost") ? "http" : "https";
   const baseUrl = `${proto}://${host}`;
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${baseUrl}/success?plan=${plan}`,
