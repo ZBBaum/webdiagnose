@@ -5,6 +5,7 @@ import type { AuditResult, PillarResult } from "@/lib/auditor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import SiteIQLogo from "@/components/SiteIQLogo";
 
 /* ─── constants ──────────────────────────────────────────── */
 
@@ -80,11 +81,7 @@ function LoadingView({ progress }: { progress: number }) {
 
         {/* logo */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-500 flex items-center justify-center shadow-lg">
-            <svg width="22" height="22" viewBox="0 0 18 18" fill="none">
-              <path d="M2 4L6 13L9 7L12 13L16 4" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+          <SiteIQLogo size={48} className="shadow-lg" />
           <span className="text-sm font-semibold text-foreground">SiteIQ</span>
         </div>
 
@@ -180,11 +177,7 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
       {/* print-only header */}
       <div className="hidden print:flex items-center justify-between px-8 py-5 border-b border-gray-200">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-[8px] bg-gradient-to-br from-violet-600 to-blue-500 flex items-center justify-center shrink-0">
-            <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
-              <path d="M2 4L6 13L9 7L12 13L16 4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+          <SiteIQLogo size={28} className="shrink-0" />
           <span className="text-sm font-semibold">SiteIQ Audit Report</span>
         </div>
         <span className="text-xs text-gray-500 truncate max-w-sm">{url}</span>

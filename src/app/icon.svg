@@ -1,0 +1,13 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="siq-g" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#siq-g)"/>
+  <text x="2.5" y="24" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="21" fill="white">S</text>
+  <rect x="20.5" y="14.5" width="3.5" height="9.5" rx="1.75" fill="white"/>
+  <circle cx="22.25" cy="8" r="2.75" stroke="white" stroke-width="1.8" fill="none"/>
+  <line x1="24.1" y1="9.85" x2="27" y2="12.75" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>
