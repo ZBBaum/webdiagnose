@@ -6,6 +6,12 @@ const FREE_LIMIT = 3;
 export const RATE_LIMIT_ERROR =
   "You've used your free audits for today. Upgrade to Pro for unlimited audits.";
 
+const ADMIN_EMAILS = new Set([
+  "zackbaum2008@gmail.com",
+  "jeff.baum@fairfieldmgmt.com",
+  "dr.gulsungul@gmail.com",
+]);
+
 function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,8 +34,13 @@ function nextMidnightUTC(): string {
 
 export async function checkRateLimit(
   request: NextRequest,
-  userId: string | null
+  userId: string | null,
+  userEmail?: string | null
 ): Promise<{ allowed: boolean; error?: string }> {
+  if (userEmail && ADMIN_EMAILS.has(userEmail.toLowerCase())) {
+    return { allowed: true };
+  }
+
   const limit = userId ? FREE_LIMIT : ANON_LIMIT;
   const id = identifier(request, userId);
   const supabase = adminClient();

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const { allowed, error: rateLimitError } = await checkRateLimit(request, user?.id ?? null);
+    const { allowed, error: rateLimitError } = await checkRateLimit(request, user?.id ?? null, user?.email ?? null);
     if (!allowed) {
       return NextResponse.json({ error: rateLimitError }, { status: 429 });
     }
