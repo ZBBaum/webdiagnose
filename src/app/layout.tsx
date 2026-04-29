@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     title: "SiteIQ",
     description: "See your website through your customer's eyes",
     url: "https://siteiqai.vercel.app",
-    images: [{ url: "https://siteiqai.vercel.app/texting-image.png" }],
+    images: [{ url: "https://siteiqai.vercel.app/texting-image.png", width: 2880, height: 1522 }],
   },
   twitter: {
     card: "summary_large_image",
