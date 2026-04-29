@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     images: ["https://siteiqai.vercel.app/og-image.png"],
   },
-  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({
