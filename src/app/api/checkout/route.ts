@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${baseUrl}/success?plan=${plan}`,
     cancel_url: `${baseUrl}/pricing`,
+    metadata: { tier: plan },
   });
 
   return NextResponse.redirect(session.url!);

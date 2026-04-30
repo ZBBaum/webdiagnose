@@ -15,3 +15,10 @@ create table rate_limits (
   count      integer     not null default 0,
   reset_at   timestamptz not null
 );
+
+create table profiles (
+  id                 uuid primary key references auth.users(id) on delete cascade,
+  email              text not null unique,
+  subscription_tier  text not null default 'free',
+  stripe_customer_id text
+);
