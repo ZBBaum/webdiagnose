@@ -200,7 +200,13 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
               variant="outline"
               size="sm"
               className="text-xs cursor-pointer"
-              onClick={() => window.print()}
+              onClick={() => {
+                const html = document.documentElement;
+                const wasDark = html.classList.contains('dark');
+                if (wasDark) html.classList.remove('dark');
+                window.print();
+                if (wasDark) html.classList.add('dark');
+              }}
             >
               Export PDF
             </Button>
@@ -218,7 +224,7 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
             {/* grade card */}
             <Card className="shadow-sm">
               <CardContent className="flex flex-col items-center gap-2 py-6">
-                <div className={cn("w-20 h-20 rounded-full border-2 flex items-center justify-center text-[2.25rem] font-extrabold", gradeMeta.circle)}>
+                <div className={cn("w-20 h-20 rounded-full border-2 flex items-center justify-center text-[2.25rem] font-extrabold print-grade-circle", gradeMeta.circle)}>
                   {audit.grade}
                 </div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mt-1">

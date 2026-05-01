@@ -146,6 +146,10 @@ a {
 }
 
 @media print {
+  html {
+    color-scheme: light;
+  }
+
   * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -156,9 +160,58 @@ a {
     color: black !important;
   }
 
+  /* Cards: white background, light border, no shadow */
+  [data-slot="card"] {
+    background-color: white !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Strip colored header bands from pillar cards */
+  .bg-emerald-50, .bg-amber-50, .bg-red-50,
+  .bg-blue-50, .bg-orange-50 {
+    background-color: white !important;
+  }
+
+  /* Pillar card header text → dark readable color */
+  .text-emerald-800, .text-amber-800, .text-red-800,
+  .text-blue-800, .text-orange-800 {
+    color: #1e293b !important;
+  }
+
+  /* Strength badges (Strong / Fair / Weak) → neutral */
+  .bg-emerald-100, .bg-amber-100, .bg-red-100,
+  .bg-blue-100, .bg-orange-100 {
+    background-color: #f1f5f9 !important;
+    color: #334155 !important;
+  }
+
+  /* Grade circle: border only, no filled background */
+  .print-grade-circle {
+    background-color: transparent !important;
+  }
+
+  /* Muted backgrounds stay light gray — already fine in light mode */
+  .bg-muted {
+    background-color: #f1f5f9 !important;
+  }
+
+  /* Muted text → readable dark gray */
+  .text-muted-foreground {
+    color: #64748b !important;
+  }
+
   /* Kill sticky/backdrop so layout is static */
   .sticky {
     position: static !important;
+  }
+
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+  }
+
+  [class*="bg-background\/"] {
+    background-color: white !important;
   }
 
   /* Single-column layout — sidebar stacks above pillar cards */
@@ -170,15 +223,6 @@ a {
   [class*="rounded-2xl"],
   [class*="rounded-xl"] {
     break-inside: avoid;
-  }
-
-  /* Remove backdrop blur and translucent backgrounds */
-  [class*="backdrop-blur"] {
-    backdrop-filter: none !important;
-  }
-
-  [class*="bg-background\/"] {
-    background-color: white !important;
   }
 }
 
