@@ -4,43 +4,41 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── design tokens (dark-only) ──────────────────────────────── */
 :root {
-  --bg: #ffffff;
-  --fg: #0f172a;
-  --text-secondary: #64748b;
-  --border: oklch(0.922 0 0);
   --navbar-height: 76px;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: oklch(0.09 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.13 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.13 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.145 0 0);
+  --secondary: oklch(0.18 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.62 0 0);
+  --accent: oklch(0.18 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.556 0 0);
+  --radius: 0.625rem;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar: oklch(0.13 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.18 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
 * {
@@ -50,12 +48,8 @@
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9f9f9;
+  background-color: #090909;
   min-height: 100vh;
-}
-
-.dark body {
-  background-color: #080808;
 }
 
 a {
@@ -92,7 +86,7 @@ a {
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
+  --color-popover: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-foreground: var(--foreground);
@@ -106,49 +100,40 @@ a {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* ─── animated aurora blobs ──────────────────────────────────── */
+@keyframes aurora-a {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33%       { transform: translate(40px, -30px) scale(1.06); }
+  66%       { transform: translate(-20px, 20px) scale(0.97); }
+}
+@keyframes aurora-b {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  40%       { transform: translate(-50px, 40px) scale(0.94); }
+  80%       { transform: translate(30px, -20px) scale(1.04); }
+}
+@keyframes aurora-c {
+  0%, 100% { transform: translate(0px, 0px) scale(1.02); }
+  50%       { transform: translate(25px, 35px) scale(0.96); }
+}
+@keyframes float-card {
+  0%, 100% { transform: perspective(1200px) rotateY(-5deg) rotateX(2deg) translateY(0px); }
+  50%       { transform: perspective(1200px) rotateY(-5deg) rotateX(2deg) translateY(-10px); }
 }
 
+.animate-aurora-a { animation: aurora-a 14s ease-in-out infinite; }
+.animate-aurora-b { animation: aurora-b 18s ease-in-out infinite; }
+.animate-aurora-c { animation: aurora-c 11s ease-in-out infinite; }
+.animate-float-card { animation: float-card 6s ease-in-out infinite; }
+
+/* ─── keyframes ───────────────────────────────────────────────── */
 @keyframes progress-fill {
   from { width: 0%; }
   to   { width: 95%; }
 }
 
+/* ─── print ──────────────────────────────────────────────────── */
 @media print {
-  html {
-    color-scheme: light;
-  }
+  html { color-scheme: light; }
 
   * {
     -webkit-print-color-adjust: exact;
@@ -160,80 +145,38 @@ a {
     color: black !important;
   }
 
-  /* Cards: white background, light border, no shadow */
   [data-slot="card"] {
     background-color: white !important;
     border-color: #e2e8f0 !important;
     box-shadow: none !important;
   }
 
-  /* Strip colored header bands from pillar cards */
-  .bg-emerald-50, .bg-amber-50, .bg-red-50,
-  .bg-blue-50, .bg-orange-50 {
+  .bg-emerald-50, .bg-amber-50, .bg-red-50, .bg-blue-50, .bg-orange-50 {
     background-color: white !important;
   }
 
-  /* Pillar card header text → dark readable color */
-  .text-emerald-800, .text-amber-800, .text-red-800,
-  .text-blue-800, .text-orange-800 {
+  .text-emerald-800, .text-amber-800, .text-red-800, .text-blue-800, .text-orange-800 {
     color: #1e293b !important;
   }
 
-  /* Strength badges (Strong / Fair / Weak) → neutral */
-  .bg-emerald-100, .bg-amber-100, .bg-red-100,
-  .bg-blue-100, .bg-orange-100 {
+  .bg-emerald-100, .bg-amber-100, .bg-red-100, .bg-blue-100, .bg-orange-100 {
     background-color: #f1f5f9 !important;
     color: #334155 !important;
   }
 
-  /* Grade circle: border only, no filled background */
-  .print-grade-circle {
-    background-color: transparent !important;
-  }
-
-  /* Muted backgrounds stay light gray — already fine in light mode */
-  .bg-muted {
-    background-color: #f1f5f9 !important;
-  }
-
-  /* Muted text → readable dark gray */
-  .text-muted-foreground {
-    color: #64748b !important;
-  }
-
-  /* Kill sticky/backdrop so layout is static */
-  .sticky {
-    position: static !important;
-  }
-
-  [class*="backdrop-blur"] {
-    backdrop-filter: none !important;
-  }
-
-  [class*="bg-background\/"] {
-    background-color: white !important;
-  }
-
-  /* Single-column layout — sidebar stacks above pillar cards */
-  .lg\:grid-cols-\[280px_1fr\] {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Keep cards together — no mid-card page breaks */
-  [class*="rounded-2xl"],
-  [class*="rounded-xl"] {
-    break-inside: avoid;
-  }
+  .print-grade-circle { background-color: transparent !important; }
+  .bg-muted { background-color: #f1f5f9 !important; }
+  .text-muted-foreground { color: #64748b !important; }
+  .sticky { position: static !important; }
+  [class*="backdrop-blur"] { backdrop-filter: none !important; }
+  [class*="bg-background\/"] { background-color: white !important; }
+  .lg\:grid-cols-\[280px_1fr\] { grid-template-columns: 1fr !important; }
+  [class*="rounded-2xl"], [class*="rounded-xl"] { break-inside: avoid; }
 }
 
+/* ─── base ───────────────────────────────────────────────────── */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+  html { @apply font-sans; }
 }
