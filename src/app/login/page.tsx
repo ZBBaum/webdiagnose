@@ -1,17 +1,30 @@
-import LoginForm from "./LoginForm";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { SignInPage } from "@/components/ui/sign-in-flow-1";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  async function handleEmailSubmit(email: string) {
+    await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  }
+
+  async function handleCodeComplete(email: string, code: string) {
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
+    if (!error) {
+      router.push("/");
+      router.refresh();
+    }
+  }
+
   return (
-    <main className="min-h-[calc(100vh-76px)] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your SiteIQ account</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <LoginForm />
-        </div>
-      </div>
-    </main>
+    <div className="fixed inset-0 z-50">
+      <SignInPage
+        onEmailSubmit={handleEmailSubmit}
+        onCodeComplete={handleCodeComplete}
+      />
+    </div>
   );
 }
