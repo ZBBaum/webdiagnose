@@ -50,12 +50,12 @@
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-image: radial-gradient(ellipse at center, #ffffff 0%, #e4e4e4 100%);
+  background-color: #f9f9f9;
   min-height: 100vh;
 }
 
 .dark body {
-  background-image: radial-gradient(ellipse at center, #1c1c1c 0%, #000000 100%);
+  background-color: #080808;
 }
 
 a {
