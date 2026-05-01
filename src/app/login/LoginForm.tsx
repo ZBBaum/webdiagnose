@@ -43,7 +43,7 @@ export default function LoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500"
+          className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
           placeholder="you@example.com"
         />
       </div>
@@ -58,20 +58,20 @@ export default function LoginForm() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500"
+          className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
           placeholder="••••••••"
         />
       </div>
       <button
         type="submit"
         disabled={loading}
-        className="h-10 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer"
+        className="h-10 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer"
       >
         {loading ? "Signing in…" : "Sign in"}
       </button>
       <p className="text-center text-sm text-muted-foreground">
         No account?{" "}
-        <a href="/signup" className="text-violet-500 hover:underline">
+        <a href="/signup" className="text-blue-400 hover:underline">
           Sign up
         </a>
       </p>

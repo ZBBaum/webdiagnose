@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight, Zap, Layers, Unlock, Link2, BarChart3, Wrench,
@@ -34,7 +35,7 @@ function FadeIn({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-widest uppercase text-violet-400 border border-violet-500/25 bg-violet-500/10">
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-widest uppercase text-blue-400 border border-blue-500/25 bg-blue-500/10">
       {children}
     </span>
   );
@@ -44,7 +45,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 const HOW_STEPS = [
   { icon: Link2,    step: "1", title: "Paste your URL",    desc: "Drop any page URL into the box. No login, no browser extension, no waiting." },
-  { icon: BarChart3, step: "2", title: "Get your grade",   desc: "AI analyzes 6 conversion pillars and returns a letter grade in ~15 seconds." },
+  { icon: BarChart3, step: "2", title: "Get your grade",   desc: "AI analyzes 6 conversion pillars and returns a letter grade in ~30 seconds." },
   { icon: Wrench,   step: "3", title: "Fix what's broken", desc: "Each pillar comes with ranked, actionable fixes so you know exactly what to tackle first." },
 ];
 
@@ -115,14 +116,61 @@ const PLANS = [
 // ─── audit card mockup ─────────────────────────────────────────
 
 function AuditCardMockup() {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [glare, setGlare] = useState({ x: 50, y: 50 });
+  const [hovered, setHovered] = useState(false);
+
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const dx = e.clientX - (rect.left + rect.width / 2);
+    const dy = e.clientY - (rect.top + rect.height / 2);
+    const maxTilt = 15;
+    setTilt({
+      x: -(dy / (rect.height / 2)) * maxTilt,
+      y:  (dx / (rect.width  / 2)) * maxTilt,
+    });
+    setGlare({
+      x: ((e.clientX - rect.left) / rect.width)  * 100,
+      y: ((e.clientY - rect.top)  / rect.height) * 100,
+    });
+  };
+
+  const onMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+    setHovered(false);
+  };
+
   return (
     <div className="relative w-full max-w-[420px]">
       {/* glow */}
-      <div className="absolute inset-0 bg-violet-600/20 rounded-3xl blur-[70px] scale-90 translate-y-4" />
-      {/* card */}
+      <div className="absolute inset-0 bg-blue-600/20 rounded-3xl blur-[70px] scale-90 translate-y-4" />
+      {/* float wrapper — pauses when mouse is over card */}
       <div
-        className="animate-float-card relative rounded-2xl border border-white/10 bg-[#0e0e12]/95 backdrop-blur-sm shadow-[0_40px_80px_-20px_rgba(0,0,0,0.7)] overflow-hidden"
+        className="animate-float-card"
+        style={{ animationPlayState: hovered ? "paused" : "running" }}
       >
+      {/* tilt + card */}
+      <div
+        ref={cardRef}
+        onMouseEnter={() => setHovered(true)}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
+        style={{
+          transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transition: hovered ? "transform 0.1s ease-out" : "transform 0.6s ease-out",
+        }}
+        className="relative rounded-2xl border border-white/10 bg-[#0e0e12]/95 backdrop-blur-sm shadow-[0_40px_80px_-20px_rgba(0,0,0,0.7)] overflow-hidden cursor-default"
+      >
+        {/* spotlight glare */}
+        <div
+          className="absolute inset-0 pointer-events-none z-10 rounded-2xl transition-opacity duration-200"
+          style={{
+            opacity: hovered ? 1 : 0,
+            background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255,255,255,0.09) 0%, transparent 55%)`,
+          }}
+        />
         {/* top bar */}
         <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/6 bg-white/[0.02]">
           <div className="size-2.5 rounded-full bg-rose-500/60" />
@@ -191,7 +239,8 @@ function AuditCardMockup() {
             </p>
           </div>
         </div>
-      </div>
+      </div>{/* end tilt */}
+      </div>{/* end float wrapper */}
     </div>
   );
 }
@@ -207,7 +256,7 @@ export default function Home() {
 
         {/* aurora blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-          <div className="animate-aurora-a absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-violet-700/18 blur-[130px]" />
+          <div className="animate-aurora-a absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-blue-700/18 blur-[130px]" />
           <div className="animate-aurora-b absolute top-1/4 right-0 w-[550px] h-[550px] rounded-full bg-blue-700/12 blur-[120px]" />
           <div className="animate-aurora-c absolute bottom-0 left-1/3 w-[450px] h-[450px] rounded-full bg-indigo-700/10 blur-[110px]" />
         </div>
@@ -236,8 +285,8 @@ export default function Home() {
                 className="inline-flex w-fit items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-medium text-gray-400"
               >
                 <span className="relative flex size-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-500 opacity-60" />
-                  <span className="relative inline-flex rounded-full size-1.5 bg-violet-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-60" />
+                  <span className="relative inline-flex rounded-full size-1.5 bg-blue-500" />
                 </span>
                 AI-Powered CRO Analysis
               </motion.div>
@@ -251,7 +300,7 @@ export default function Home() {
               >
                 Turn visitors<br />
                 into{" "}
-                <span className="bg-gradient-to-r from-violet-400 via-fuchsia-300 to-blue-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   customers.
                 </span>
               </motion.h1>
@@ -263,7 +312,7 @@ export default function Home() {
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.16 }}
                 className="text-[17px] text-gray-400 leading-relaxed max-w-md"
               >
-                Paste any URL and get a deep CRO audit across 6 conversion pillars in under 15 seconds — no account needed.
+                Paste any URL and get a deep CRO audit across 6 conversion pillars in under 30 seconds — no account needed.
               </motion.p>
 
               {/* input */}
@@ -273,7 +322,7 @@ export default function Home() {
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.24 }}
                 className="w-full max-w-md"
               >
-                <div className="relative w-full rounded-2xl border border-white/12 bg-white/5 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-200 has-[input:focus]:border-violet-500/50 has-[input:focus]:ring-4 has-[input:focus]:ring-violet-500/10">
+                <div className="relative w-full rounded-2xl border border-white/12 bg-white/5 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-200 has-[input:focus]:border-blue-500/50 has-[input:focus]:ring-4 has-[input:focus]:ring-blue-500/10">
                   <form action="/results" method="GET" className="flex items-center p-2 gap-2">
                     <div className="flex items-center flex-1 gap-3 pl-4 pr-2">
                       <svg className="size-4 shrink-0 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -291,7 +340,7 @@ export default function Home() {
                     </div>
                     <button
                       type="submit"
-                      className="group inline-flex items-center gap-1.5 h-11 px-5 rounded-xl bg-gradient-to-b from-violet-500 to-violet-600 text-white text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.1)] hover:from-violet-600 hover:to-violet-700 active:scale-[0.97] transition-all duration-150 shrink-0 cursor-pointer whitespace-nowrap"
+                      className="group inline-flex items-center gap-1.5 h-11 px-5 rounded-xl bg-gradient-to-b from-cyan-500 to-cyan-600 text-white text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.1)] hover:from-cyan-600 hover:to-cyan-700 active:scale-[0.97] transition-all duration-150 shrink-0 cursor-pointer whitespace-nowrap"
                     >
                       Analyze
                       <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform duration-150" />
@@ -299,7 +348,7 @@ export default function Home() {
                   </form>
                 </div>
                 <p className="mt-3 text-[11px] text-gray-600 tracking-wide uppercase">
-                  Free · No credit card · Results in ~15 seconds
+                  Free · No credit card · Results in ~30 seconds
                 </p>
               </motion.div>
 
@@ -311,7 +360,7 @@ export default function Home() {
                 className="flex flex-wrap gap-2"
               >
                 {[
-                  { icon: Zap,    label: "15-second analysis" },
+                  { icon: Zap,    label: "30-second analysis" },
                   { icon: Layers, label: "6 conversion pillars" },
                   { icon: Unlock, label: "No signup required" },
                 ].map(({ icon: Icon, label }) => (
@@ -319,7 +368,7 @@ export default function Home() {
                     key={label}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-gray-500 border border-white/8 bg-white/4"
                   >
-                    <Icon className="size-3 text-violet-500" strokeWidth={2.5} />
+                    <Icon className="size-3 text-blue-400" strokeWidth={2.5} />
                     {label}
                   </span>
                 ))}
@@ -359,8 +408,8 @@ export default function Home() {
             <FadeIn key={step} delay={i * 0.1}>
               <div className="relative flex flex-col gap-5 rounded-2xl border border-white/8 bg-white/[0.03] p-7 h-full">
                 <div className="flex items-center gap-3">
-                  <div className="size-9 rounded-xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center shrink-0">
-                    <Icon className="size-4 text-violet-400" strokeWidth={1.75} />
+                  <div className="size-9 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+                    <Icon className="size-4 text-blue-400" strokeWidth={1.75} />
                   </div>
                   <span className="text-[11px] font-bold tracking-widest text-gray-600 uppercase">Step {step}</span>
                 </div>
@@ -369,7 +418,7 @@ export default function Home() {
                   <p className="text-sm text-gray-400 leading-relaxed">{desc}</p>
                 </div>
                 {i < 2 && (
-                  <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-violet-500/40 ring-4 ring-violet-500/10 z-10" />
+                  <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-blue-500/40 ring-4 ring-blue-500/10 z-10" />
                 )}
               </div>
             </FadeIn>
@@ -394,9 +443,9 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {PILLARS.map(({ icon: Icon, name, desc }, i) => (
             <FadeIn key={name} delay={i * 0.07}>
-              <div className="flex flex-col gap-4 rounded-2xl border border-white/8 bg-white/[0.03] p-6 h-full group hover:border-violet-500/30 hover:bg-violet-500/5 transition-colors duration-300">
-                <div className="size-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors duration-300">
-                  <Icon className="size-[18px] text-violet-400" strokeWidth={1.75} />
+              <div className="flex flex-col gap-4 rounded-2xl border border-white/8 bg-white/[0.03] p-6 h-full group hover:border-blue-500/30 hover:bg-blue-500/5 transition-colors duration-300">
+                <div className="size-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors duration-300">
+                  <Icon className="size-[18px] text-blue-400" strokeWidth={1.75} />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <h3 className="font-semibold text-white">{name}</h3>
@@ -418,7 +467,7 @@ export default function Home() {
             See what a real audit looks like
           </h2>
           <p className="text-gray-400 max-w-sm leading-relaxed">
-            Here&apos;s a sample report for example.com — exactly what you get in 15 seconds.
+            Here&apos;s a sample report for example.com — exactly what you get in 30 seconds.
           </p>
         </FadeIn>
 
@@ -499,13 +548,13 @@ export default function Home() {
               <FadeIn key={plan.name} delay={i * 0.1}>
                 <div className={cn(
                   "relative flex flex-col gap-6 rounded-2xl p-7 h-full border",
-                  isPro ? "border-violet-500/50 bg-violet-500/5 shadow-[0_0_40px_-8px_rgba(139,92,246,0.3)]"
+                  isPro ? "border-blue-500/50 bg-blue-500/5 shadow-[0_0_40px_-8px_rgba(37,99,235,0.3)]"
                     : isAgency ? "border-amber-400/30 bg-amber-500/5"
                     : "border-white/8 bg-white/[0.03]"
                 )}>
                   {isPro && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-violet-500 to-blue-500 text-white whitespace-nowrap">
+                      <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 text-white whitespace-nowrap">
                         Most popular
                       </span>
                     </div>
@@ -531,7 +580,7 @@ export default function Home() {
                   <ul className="flex-1 flex flex-col gap-2.5">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-sm">
-                        <Check size={14} className={cn("mt-0.5 shrink-0", isAgency ? "text-amber-400" : isPro ? "text-violet-400" : "text-emerald-500")} />
+                        <Check size={14} className={cn("mt-0.5 shrink-0", isAgency ? "text-amber-400" : isPro ? "text-blue-400" : "text-emerald-500")} />
                         <span className="text-gray-300">{f}</span>
                       </li>
                     ))}
@@ -541,7 +590,7 @@ export default function Home() {
                     className={cn(
                       "inline-flex items-center justify-center h-11 rounded-xl text-sm font-semibold transition-all",
                       isAgency ? "bg-gradient-to-r from-amber-400 to-orange-400 text-black hover:from-amber-300 hover:to-orange-300"
-                        : isPro ? "bg-gradient-to-b from-violet-500 to-violet-600 text-white hover:from-violet-600 hover:to-violet-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
+                        : isPro ? "bg-gradient-to-b from-cyan-500 to-cyan-600 text-white hover:from-cyan-600 hover:to-cyan-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]"
                         : "border border-white/10 bg-white/5 hover:bg-white/10 text-white"
                     )}
                   >
@@ -564,21 +613,21 @@ export default function Home() {
       {/* ── FINAL CTA ─────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden py-36 px-6">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[300px] bg-violet-600/18 rounded-full blur-[100px]" />
+          <div className="w-[600px] h-[300px] bg-blue-600/18 rounded-full blur-[100px]" />
         </div>
         <FadeIn className="relative z-10 flex flex-col items-center text-center gap-8 max-w-xl mx-auto">
           <h2 className="text-5xl sm:text-6xl font-bold tracking-[-0.04em] leading-[1.05] text-white">
             Ready to fix<br />
-            <span className="bg-gradient-to-r from-violet-400 via-fuchsia-300 to-blue-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
               your website?
             </span>
           </h2>
           <p className="text-gray-400 text-lg leading-relaxed max-w-sm">
-            Run your first free audit in under 15 seconds. No account needed.
+            Run your first free audit in under 30 seconds. No account needed.
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="group inline-flex items-center gap-2 h-14 px-8 rounded-2xl bg-gradient-to-b from-violet-500 to-violet-600 text-white text-base font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_20px_60px_-12px_rgba(139,92,246,0.5)] hover:from-violet-600 hover:to-violet-700 active:scale-[0.97] transition-all duration-150 cursor-pointer"
+            className="group inline-flex items-center gap-2 h-14 px-8 rounded-2xl bg-gradient-to-b from-cyan-500 to-cyan-600 text-white text-base font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_20px_60px_-12px_rgba(6,182,212,0.5)] hover:from-cyan-600 hover:to-cyan-700 active:scale-[0.97] transition-all duration-150 cursor-pointer"
           >
             Analyze your site
             <ChevronUp className="size-4 group-hover:-translate-y-0.5 transition-transform duration-150" />

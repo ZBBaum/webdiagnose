@@ -32,7 +32,7 @@ export default async function HistoryPage() {
           <p className="text-muted-foreground text-sm">No audits yet.</p>
           <a
             href="/"
-            className="mt-4 inline-flex h-9 items-center px-4 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-medium hover:opacity-90 transition-opacity"
+            className="mt-4 inline-flex h-9 items-center px-4 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-medium hover:opacity-90 transition-opacity"
           >
             Run your first audit
           </a>

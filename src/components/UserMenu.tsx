@@ -42,7 +42,7 @@ export default function UserMenu() {
         onClick={() => setOpen((o) => !o)}
         className="h-8 px-3 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors inline-flex items-center gap-2 cursor-pointer"
       >
-        <span className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs flex items-center justify-center font-semibold shrink-0">
+        <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold shrink-0">
           {user.email?.[0]?.toUpperCase() ?? "?"}
         </span>
         <span className="max-w-[140px] truncate hidden sm:block">{user.email}</span>

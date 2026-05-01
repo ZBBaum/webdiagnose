@@ -25,7 +25,7 @@ export default async function SuccessPage({
         </div>
         <a
           href="/"
-          className="inline-flex items-center justify-center h-11 px-6 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-semibold hover:from-violet-700 hover:to-blue-700 transition-all"
+          className="inline-flex items-center justify-center h-11 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-semibold hover:from-blue-700 hover:to-cyan-600 transition-all"
         >
           Start auditing →
         </a>

@@ -93,7 +93,7 @@ function LoadingView({ progress }: { progress: number }) {
             <div
               style={{
                 width: `${progress}%`,
-                backgroundColor: "#7c3aed",
+                backgroundColor: "#2563eb",
                 transition: "width 0.15s ease",
                 height: "100%",
                 borderRadius: "9999px",
@@ -355,7 +355,7 @@ export default function ResultsClient({ url }: { url: string }) {
           <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold">✕</div>
           <h2 className="text-lg font-semibold">Audit failed</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{errorMsg}</p>
-          <a href="/" className="text-sm text-violet-600 hover:underline">← Try another URL</a>
+          <a href="/" className="text-sm text-blue-500 hover:underline">← Try another URL</a>
         </div>
       </div>
     );

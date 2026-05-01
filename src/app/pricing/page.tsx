@@ -46,13 +46,13 @@ export default function PricingPage() {
     <main className="min-h-[calc(100vh-76px)] flex flex-col items-center px-6 py-16 gap-12">
       {/* header */}
       <div className="flex flex-col items-center gap-4 text-center max-w-xl">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800 tracking-wide">
-          <span className="size-1.5 rounded-full bg-violet-500 shrink-0" />
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 tracking-wide">
+          <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
           Simple pricing
         </span>
         <h1 className="text-4xl font-bold tracking-tight text-foreground">
           Upgrade your{" "}
-          <span className="bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
             audit power
           </span>
         </h1>
@@ -74,13 +74,13 @@ export default function PricingPage() {
                 isAgency
                   ? "bg-[#0d0d12] text-white"
                   : "bg-card text-foreground border border-border",
-                isPro && "border-violet-400 shadow-lg shadow-violet-100 dark:shadow-violet-950/30"
+                isPro && "border-blue-400 shadow-lg shadow-blue-100 dark:shadow-blue-950/30"
               )}
             >
               {/* badge */}
               {isPro && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-sm whitespace-nowrap">
+                  <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm whitespace-nowrap">
                     Most popular
                   </span>
                 </div>
@@ -135,7 +135,7 @@ export default function PricingPage() {
                       size={15}
                       className={cn(
                         "mt-0.5 shrink-0",
-                        isAgency ? "text-amber-400" : isPro ? "text-violet-500" : "text-emerald-500"
+                        isAgency ? "text-amber-400" : isPro ? "text-blue-400" : "text-emerald-500"
                       )}
                     />
                     <span className={isAgency ? "text-white/80" : "text-foreground"}>
@@ -153,7 +153,7 @@ export default function PricingPage() {
                   isAgency
                     ? "bg-gradient-to-r from-amber-400 to-orange-400 text-black hover:from-amber-300 hover:to-orange-300 shadow-md shadow-amber-900/30"
                     : isPro
-                    ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white hover:from-violet-700 hover:to-blue-700 shadow-sm"
+                    ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-700 hover:to-cyan-600 shadow-sm"
                     : "border border-border bg-background hover:bg-muted text-foreground"
                 )}
               >
@@ -168,7 +168,7 @@ export default function PricingPage() {
                 key={plan.name}
                 className="relative rounded-2xl p-[1.5px] shadow-[0_0_50px_-8px_rgba(139,92,246,0.5)]"
                 style={{
-                  background: "linear-gradient(135deg, #7c3aed, #3b82f6, #06b6d4)",
+                  background: "linear-gradient(135deg, #2563eb, #06b6d4, #06b6d4)",
                 }}
               >
                 {cardInner}

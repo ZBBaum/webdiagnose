@@ -16,8 +16,8 @@ export default function SiteIQLogo({
     >
       <defs>
         <linearGradient id="siq-g" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#7C3AED" />
-          <stop offset="100%" stopColor="#2563EB" />
+          <stop offset="0%" stopColor="#06b6d4" />
+          <stop offset="100%" stopColor="#06b6d4" />
         </linearGradient>
       </defs>
       <rect width="32" height="32" rx="7" fill="url(#siq-g)" />
