@@ -341,7 +341,7 @@ const AnimatedNavLink = ({
   return (
     <a
       href={href}
-      className="group relative inline-flex overflow-hidden h-5 items-center text-sm"
+      className="group relative inline-flex overflow-hidden h-5 text-sm"
     >
       <div className="flex flex-col transition-transform duration-300 ease-out group-hover:-translate-y-1/2">
         <span className="text-gray-300">{children}</span>
@@ -534,7 +534,7 @@ export const SignInPage = ({ className, onEmailSubmit, onCodeComplete }: SignInP
             <CanvasRevealEffect
               animationSpeed={3}
               containerClassName="bg-black"
-              colors={[[255, 255, 255], [255, 255, 255]]}
+              colors={[[37, 99, 235], [6, 182, 212]]}
               dotSize={6}
               reverse={false}
             />
@@ -545,7 +545,7 @@ export const SignInPage = ({ className, onEmailSubmit, onCodeComplete }: SignInP
             <CanvasRevealEffect
               animationSpeed={4}
               containerClassName="bg-black"
-              colors={[[255, 255, 255], [255, 255, 255]]}
+              colors={[[37, 99, 235], [6, 182, 212]]}
               dotSize={6}
               reverse={true}
             />

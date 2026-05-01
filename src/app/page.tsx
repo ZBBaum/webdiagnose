@@ -8,6 +8,7 @@ import {
   Smartphone, Check, ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CanvasRevealEffect } from "@/components/ui/sign-in-flow-1";
 
 // ─── shared fade-in ────────────────────────────────────────────
 
@@ -254,22 +255,19 @@ export default function Home() {
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[calc(100vh-76px)] flex items-center overflow-hidden">
 
-        {/* aurora blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-          <div className="animate-aurora-a absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-blue-700/18 blur-[130px]" />
-          <div className="animate-aurora-b absolute top-1/4 right-0 w-[550px] h-[550px] rounded-full bg-blue-700/12 blur-[120px]" />
-          <div className="animate-aurora-c absolute bottom-0 left-1/3 w-[450px] h-[450px] rounded-full bg-indigo-700/10 blur-[110px]" />
+        {/* dot matrix background */}
+        <div className="absolute inset-0 pointer-events-none select-none">
+          <CanvasRevealEffect
+            animationSpeed={3}
+            containerClassName="bg-[#090909]"
+            colors={[[37, 99, 235], [6, 182, 212]]}
+            dotSize={3}
+            showGradient={false}
+          />
+          {/* fade edges so content stays readable */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_30%,#090909_100%)]" />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#090909] to-transparent" />
         </div>
-
-        {/* grid overlay */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-40"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, rgb(255 255 255 / 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / 0.03) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
 
         <div className="relative z-10 max-w-6xl mx-auto px-8 w-full py-20 lg:py-28">
           <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-12">
