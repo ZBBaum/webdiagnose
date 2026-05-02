@@ -10,6 +10,7 @@ const ADMIN_EMAILS = new Set([
   "zackbaum2008@gmail.com",
   "jeff.baum@fairfieldmgmt.com",
   "dr.gulsungul@gmail.com",
+  "sadiemarigold2009@gmail.com",
 ]);
 
 function adminClient() {
