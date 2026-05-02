@@ -113,16 +113,30 @@ STEP 5 — REVENUE FRAMING
 Write one sentence estimating the revenue impact of fixing the top issues.
 
 STEP 6 — VISUAL ANNOTATIONS (only if a screenshot was provided)
-Looking at the screenshot, identify 4-8 specific on-page areas that represent critical issues, warnings, or strong elements.
-Coordinates are percentages of the FULL screenshot pixel dimensions:
-- x: left edge of the box (0 = far left, 100 = far right)
-- y: top edge of the box (0 = very top, 100 = very bottom)
-- width/height: box size as % of full screenshot dimensions
-- type: "critical" (conversion killer), "warning" (needs improvement), "good" (strong element)
-- label: ≤25 chars — concise name (e.g. "Weak CTA", "No Social Proof", "Clear Hero")
-- description: ≤100 chars — what the issue is and why it matters
+Place 4-8 tight bounding boxes on specific, identifiable elements visible in the screenshot.
 
-Focus annotations on: hero headline, primary CTA buttons, trust signals, nav, forms, pricing, social proof.
+COORDINATE SYSTEM: all values are percentages of the FULL screenshot pixel dimensions (0–100).
+  x, y = top-left corner of the box; width, height = size of the box.
+
+HOW TO PLACE A BOX — for each element:
+  1. Find its center point (cx, cy) in percentage coordinates
+  2. Measure only the element itself — not its surrounding whitespace or section
+  3. Compute: x = cx − width/2, y = cy − height/2
+
+TYPICAL SIZES (width × height in %):
+  Primary CTA button: 10–18 × 2–4
+  Headline / H1 text: 30–65 × 2–5
+  Navigation bar:     80–100 × 3–5
+  Form / input field: 20–40 × 3–5
+  Logo:               8–15 × 3–5
+  Social proof badge: 10–25 × 2–4
+
+NEVER annotate an entire page section — only a single specific element (one button, one headline, one badge).
+- type: "critical" (conversion killer), "warning" (needs improvement), "good" (strong element)
+- label: ≤ 25 chars
+- description: ≤ 100 chars — what specifically is wrong/right and its conversion impact
+
+Focus on: primary CTA, hero headline, value proposition text, trust badges, nav, forms, pricing.
 If no screenshot was provided, return an empty array for visualAnnotations.
 
 Return ONLY valid JSON. No markdown, no preamble. Structure:
