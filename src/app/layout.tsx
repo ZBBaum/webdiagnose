@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "SiteIQ",
@@ -29,7 +23,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} dark`}>
+    <html lang="en" className="dark">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap"
+        />
+      </head>
       <body>
         <Navbar />
         {children}

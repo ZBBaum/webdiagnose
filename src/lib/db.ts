@@ -1,22 +1,22 @@
 import { supabase } from "./supabase";
-import type { AuditResult } from "./auditor";
+import type { AuditResultV2 } from "./auditor";
 
 export type AuditRecord = {
   id: string;
   url: string;
   overall_grade: string;
-  pillar_scores: AuditResult["pillars"];
+  pillar_scores: AuditResultV2["pillars"];
   created_at: string;
 };
 
 export async function saveAudit(
   url: string,
-  audit: AuditResult,
+  audit: AuditResultV2,
   userId?: string | null
 ): Promise<void> {
   const { error } = await supabase.from("audits").insert({
     url,
-    overall_grade: audit.grade,
+    overall_grade: audit.overallGrade,
     pillar_scores: audit.pillars,
     user_id: userId ?? null,
   });

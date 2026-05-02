@@ -1,17 +1,31 @@
-import SignupForm from "./SignupForm";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { SignUpPage } from "@/components/ui/sign-in-flow-1";
+import { supabase } from "@/lib/supabase";
 
 export default function SignupPage() {
+  const router = useRouter();
+
+  async function handleGoogleSignIn() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) throw new Error(error.message);
+  }
+
+  async function handleSubmit(email: string, password: string) {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) throw new Error(error.message);
+  }
+
   return (
-    <main className="min-h-[calc(100vh-76px)] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Create an account</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">Start auditing your websites for free</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <SignupForm />
-        </div>
-      </div>
-    </main>
+    <div className="fixed inset-0 z-50">
+      <SignUpPage
+        onGoogleSignIn={handleGoogleSignIn}
+        onSubmit={handleSubmit}
+      />
+    </div>
   );
 }
