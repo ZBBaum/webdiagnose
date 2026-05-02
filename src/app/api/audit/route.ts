@@ -44,11 +44,15 @@ export async function GET(request: NextRequest) {
         let rawText = "";
         let tokenCount = 0;
 
+        // Increase tokens to 8192 when a screenshot is included (vision uses more)
+        const hasScreenshot = !!scraped.screenshotBase64;
+        console.log("[audit] screenshot captured:", hasScreenshot);
+
         const claudeStream = client.messages.stream({
           model: "claude-sonnet-4-6",
-          max_tokens: 4096,
+          max_tokens: hasScreenshot ? 8192 : 4096,
           system: AUDIT_SYSTEM_PROMPT,
-          messages: [{ role: "user", content: buildAuditMessage(scraped) }],
+          messages: [{ role: "user", content: buildAuditMessage(scraped) as Parameters<typeof client.messages.stream>[0]["messages"][0]["content"] }],
         });
 
         claudeStream.on("text", (delta) => {

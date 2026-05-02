@@ -121,7 +121,11 @@ Return ONLY valid JSON. No markdown, no preamble. Structure:
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
-export function buildAuditMessage(page: ScrapedPage): string {
+type ContentBlock =
+  | { type: "text"; text: string }
+  | { type: "image"; source: { type: "base64"; media_type: "image/png"; data: string } };
+
+export function buildAuditMessage(page: ScrapedPage): string | ContentBlock[] {
   const data = {
     url: page.url,
     title: page.title,
@@ -133,7 +137,26 @@ export function buildAuditMessage(page: ScrapedPage): string {
     formFields: page.formFields,
     links: page.links.slice(0, 40).map((l) => ({ text: l.text, href: l.href })),
   };
-  return JSON.stringify(data, null, 2);
+  const textContent = JSON.stringify(data, null, 2);
+
+  if (!page.screenshotBase64) {
+    return textContent;
+  }
+
+  return [
+    {
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: "image/png",
+        data: page.screenshotBase64,
+      },
+    },
+    {
+      type: "text",
+      text: `Here is the scraped content:\n${textContent}\n\nAnd here is a screenshot of the page. Use BOTH the scraped content AND what you can visually see in the screenshot to perform your audit. Reference specific visual elements you can see — layout issues, contrast problems, CTA placement, whitespace, visual hierarchy, font choices, and overall design quality.`,
+    },
+  ];
 }
 
 // ─── audit function ────────────────────────────────────────────────────────
@@ -147,7 +170,7 @@ export async function auditPage(page: ScrapedPage): Promise<AuditResultV2> {
       model: "claude-sonnet-4-6",
       max_tokens: 4096,
       system: AUDIT_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildAuditMessage(page) }],
+      messages: [{ role: "user", content: buildAuditMessage(page) as Parameters<typeof client.messages.create>[0]["messages"][0]["content"] }],
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

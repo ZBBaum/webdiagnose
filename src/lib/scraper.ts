@@ -17,6 +17,7 @@ export interface ScrapedPage {
   }[];
   links: { text: string; href: string }[];
   meta: { description: string | null; keywords: string | null };
+  screenshotBase64: string | null;
 }
 
 const CHROMIUM_REMOTE_URL =
@@ -176,7 +177,23 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
       };
     });
 
-    return { url, ...result };
+    // Cap page height to avoid Claude token limits, then screenshot
+    let screenshotBase64: string | null = null;
+    try {
+      await page.evaluate(() => {
+        document.body.style.maxHeight = "10000px";
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.maxHeight = "10000px";
+        document.documentElement.style.overflow = "hidden";
+      });
+      const buf = await page.screenshot({ fullPage: true, type: "png" });
+      screenshotBase64 = Buffer.from(buf).toString("base64");
+      console.log(`[scraper] screenshot captured, base64 size: ${Math.round(screenshotBase64.length / 1024)}KB`);
+    } catch (err) {
+      console.warn("[scraper] screenshot failed:", err instanceof Error ? err.message : err);
+    }
+
+    return { url, ...result, screenshotBase64 };
   } finally {
     await browser.close();
   }
