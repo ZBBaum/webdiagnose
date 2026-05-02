@@ -163,8 +163,13 @@ function AnnOverlays({
               width: `${ann.width}%`,
               height: `${ann.height}%`,
               border: `2px solid ${s.badge}`,
+              boxShadow: isActive
+                ? `0 4px 14px rgba(0,0,0,0.5), 0 0 0 2px ${s.badge}80`
+                : "0 2px 8px rgba(0,0,0,0.3)",
               zIndex: isActive ? 30 : 10,
-              cursor: clickable ? "pointer" : "default",
+              cursor: "pointer",
+              transition: "box-shadow 0.15s ease",
+              animation: `siteiq-ann-fadein 0.3s ease-out ${i * 100}ms both`,
             }}
             onMouseEnter={() => onEnter(i)}
             onMouseLeave={onLeave}
@@ -183,6 +188,8 @@ function AnnOverlays({
                 left: 4,
                 boxShadow: "0 1px 5px rgba(0,0,0,0.55)",
                 zIndex: 5,
+                transform: isActive ? "scale(1.2)" : "scale(1)",
+                transition: "transform 0.15s ease",
               }}
             >
               {i + 1}
@@ -639,11 +646,13 @@ function PillarCard({
 function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: string; screenshot: string | null }) {
   const grade = (audit.overallGrade ?? "F").toUpperCase();
   const gradeRing = GRADE_RING[grade] ?? "#1e3a8a";
-  const hasAnnotations = !!(screenshot && (audit.visualAnnotations?.length ?? 0) > 0);
+  // Sort top-to-bottom so badge numbers 1, 2, 3… match reading order
+  const sortedAnnotations = [...(audit.visualAnnotations ?? [])].sort((a, b) => a.y - b.y);
+  const hasAnnotations = !!(screenshot && sortedAnnotations.length > 0);
 
-  // Build refSection → annotation index map
+  // Build refSection → sorted annotation index map
   const annMap: Record<string, number> = {};
-  audit.visualAnnotations?.forEach((ann, i) => {
+  sortedAnnotations.forEach((ann, i) => {
     if (ann.refSection) annMap[ann.refSection] = i;
   });
 
@@ -651,7 +660,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
   const highlightTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handleAnnotationClick(i: number) {
-    const ann = audit.visualAnnotations?.[i];
+    const ann = sortedAnnotations[i];
     if (!ann?.refSection) return;
     const el = document.getElementById(`audit-ann-${i}`);
     if (!el) return;
@@ -666,7 +675,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
     if (idx === undefined) return { annNumber: null, annType: null };
     return {
       annNumber: idx + 1,
-      annType: audit.visualAnnotations![idx].type,
+      annType: sortedAnnotations[idx].type,
     };
   }
 
@@ -752,7 +761,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
             />
             <AnnotatedScreenshot
               screenshot={screenshot!}
-              annotations={audit.visualAnnotations}
+              annotations={sortedAnnotations}
               url={url}
               onAnnotationClick={handleAnnotationClick}
             />
