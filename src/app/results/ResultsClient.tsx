@@ -24,30 +24,30 @@ function sc(score: number) {
     label: score >= 7 ? "Fair" : "Weak",
   };
   return {
-    tier: "low" as const, hex: "#1e3a8a",
-    cls: "text-blue-900 dark:text-blue-300",
-    bgCls: "bg-blue-100 dark:bg-[#1e3a8a]/30",
-    borderCls: "border-blue-300 dark:border-blue-700",
+    tier: "low" as const, hex: "#dc2626",
+    cls: "text-red-600 dark:text-red-400",
+    bgCls: "bg-red-50 dark:bg-red-950/30",
+    borderCls: "border-red-200 dark:border-red-800",
     label: "Critical",
   };
 }
 
 const GRADE_RING: Record<string, string> = {
-  A: "#06b6d4", B: "#2563eb", C: "#3b82f6", D: "#1d4ed8", F: "#1e3a8a",
+  A: "#06b6d4", B: "#06b6d4", C: "#2563eb", D: "#2563eb", F: "#dc2626",
 };
 
 const DIFFICULTY: Record<string, { label: string; cls: string }> = {
   easy:   { label: "Easy",   cls: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300" },
   medium: { label: "Medium", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
-  hard:   { label: "Hard",   cls: "bg-blue-200 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200" },
+  hard:   { label: "Hard",   cls: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300" },
 };
 
 /* ── annotation type colors ─────────────────────────────────── */
 
 const ANN_TYPE: Record<VisualAnnotation["type"], { border: string; badge: string; dot: string }> = {
-  critical: { border: "#ef4444", badge: "#ef4444", dot: "bg-red-500" },
-  warning:  { border: "#f59e0b", badge: "#f59e0b", dot: "bg-amber-400" },
-  good:     { border: "#22c55e", badge: "#22c55e", dot: "bg-green-500" },
+  critical: { border: "#dc2626", badge: "#dc2626", dot: "bg-red-600" },
+  warning:  { border: "#2563eb", badge: "#2563eb", dot: "bg-blue-600" },
+  good:     { border: "#06b6d4", badge: "#06b6d4", dot: "bg-cyan-500" },
 };
 
 /* ── inline cross-reference badge ───────────────────────────── */
@@ -90,19 +90,26 @@ async function downloadAnnotated(
       const w = (ann.width / 100) * W;
       const h = (ann.height / 100) * H;
 
-      // border only, no fill
+      // border only, no fill — rounded corners
       ctx.strokeStyle = s.badge;
       ctx.lineWidth = Math.max(2, W * 0.0025);
-      ctx.strokeRect(x, y, w, h);
+      const r = Math.min(12, w * 0.15, h * 0.3);
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, w, h, r);
+      } else {
+        ctx.rect(x, y, w, h);
+      }
+      ctx.stroke();
 
       // numbered circle badge
-      const r = Math.max(14, Math.round(W * 0.013));
-      const fs = Math.max(11, Math.round(r * 0.65));
-      const bx = x + r + 3;
-      const by = y + r + 3;
+      const br = Math.max(14, Math.round(W * 0.013));
+      const fs = Math.max(11, Math.round(br * 0.65));
+      const bx = x + br + 3;
+      const by = y + br + 3;
       ctx.fillStyle = s.badge;
       ctx.beginPath();
-      ctx.arc(bx, by, r, 0, Math.PI * 2);
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "white";
       ctx.font = `bold ${fs}px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif`;
@@ -163,6 +170,7 @@ function AnnOverlays({
               width: `${ann.width}%`,
               height: `${ann.height}%`,
               border: `2px solid ${s.badge}`,
+              borderRadius: 12,
               boxShadow: isActive
                 ? `0 4px 14px rgba(0,0,0,0.5), 0 0 0 2px ${s.badge}80`
                 : "0 2px 8px rgba(0,0,0,0.3)",

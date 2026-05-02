@@ -107,6 +107,9 @@ For each pillar score 0-10 and provide:
 
 Pillars: Value Proposition, CTA Strength, Trust Signals, Copy Tone, Friction, Mobile & Accessibility
 
+SCORING CALIBRATION — MANDATORY
+Score generously but honestly. A functional CTA that could be improved scores 6-7, not 3-4. Reserve scores of 1-3 for genuinely broken or missing elements, and 9-10 for truly best-in-class execution. The average well-built website should score around 6 overall. Do not be harsh for the sake of being critical. Most real-world websites should score between 4-8 on each pillar unless they have truly egregious or truly exceptional execution.
+
 STEP 4 — PIE PRIORITY LIST
 Surface the TOP 3 fixes ranked by revenue impact. For each:
 - The exact fix in one sentence
@@ -119,6 +122,11 @@ Write one sentence estimating the revenue impact of fixing the top issues.
 STEP 6 — VISUAL ANNOTATIONS (only if a screenshot was provided)
 Place 4-8 tight bounding boxes on specific, identifiable elements visible in the screenshot.
 
+COORDINATE PRECISION — CRITICAL
+When specifying coordinates, imagine drawing the tightest possible rectangle around just the specific element you are flagging — not the section, not the surrounding whitespace, just the element itself. If you are flagging a button, the box should be the size of that button. If you are flagging a headline, the box should wrap just that text. Only include an annotation if you can see the specific element clearly in the screenshot and are confident in its position. If unsure, omit the annotation.
+
+Boxes should be no larger than 15% width and 8% height unless the element genuinely spans that area.
+
 COORDINATE SYSTEM: all values are percentages of the FULL screenshot pixel dimensions (0–100).
   x, y = top-left corner of the box; width, height = size of the box.
 
@@ -128,12 +136,12 @@ HOW TO PLACE A BOX — for each element:
   3. Compute: x = cx − width/2, y = cy − height/2
 
 TYPICAL SIZES (width × height in %):
-  Primary CTA button: 10–18 × 2–4
-  Headline / H1 text: 30–65 × 2–5
-  Navigation bar:     80–100 × 3–5
-  Form / input field: 20–40 × 3–5
-  Logo:               8–15 × 3–5
-  Social proof badge: 10–25 × 2–4
+  Primary CTA button:  8–14 × 2–3.5
+  Headline / H1 text: 25–55 × 2–4
+  Navigation bar:     70–95 × 2–4
+  Form / input field: 18–35 × 2–4
+  Logo:                6–12 × 2–4
+  Social proof badge:  8–20 × 1.5–3
 
 NEVER annotate an entire page section — only a single specific element (one button, one headline, one badge).
 - type: "critical" (conversion killer), "warning" (needs improvement), "good" (strong element)
