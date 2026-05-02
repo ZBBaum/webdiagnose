@@ -3,11 +3,11 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAuditHistory } from "@/lib/db";
 
 const GRADE_COLOR: Record<string, string> = {
-  A: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-  B: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
-  C: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-  D: "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300",
-  F: "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
+  A: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300",
+  B: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300",
+  C: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
+  D: "bg-blue-200 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400",
+  F: "bg-blue-200 text-blue-900 dark:bg-blue-950/80 dark:text-blue-500",
 };
 
 export default async function HistoryPage() {

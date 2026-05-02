@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import { motion, useMotionValue, animate } from "framer-motion";
 import {
   ArrowRight, Zap, Layers, Unlock, Link2, BarChart3, Wrench,
   Target, MousePointerClick, ShieldCheck, FileText, AlertTriangle,
@@ -55,34 +55,38 @@ const PILLARS = [
   { icon: MousePointerClick, name: "CTA Strength",     desc: "Are your calls-to-action prominent, specific, and persuasive enough to drive clicks?" },
   { icon: ShieldCheck,      name: "Trust Signals",     desc: "Does your site show reviews, credentials, and social proof that builds buyer confidence?" },
   { icon: FileText,         name: "Copy & Tone",       desc: "Is your writing clear, benefit-focused, and tuned to the language of your audience?" },
-  { icon: AlertTriangle,    name: "Friction Detection", desc: "Are there hidden barriers — long forms, confusing nav, unclear pricing — killing conversions?" },
+  { icon: AlertTriangle,    name: "Friction Detection", desc: "Are there hidden barriers like long forms, confusing nav, and unclear pricing killing conversions?" },
   { icon: Smartphone,       name: "Mobile & Accessibility", desc: "Does your page work flawlessly on mobile and for users with accessibility needs?" },
 ];
 
 const EXAMPLE_PILLARS = [
-  { name: "Value Proposition",    score: 8, fixes: ["Lead headline mentions features, not outcomes — rewrite around the result.", "Value prop is below the fold on mobile. Move it to the first 100px."] },
-  { name: "Copy & Tone",          score: 8, fixes: ["Description uses 'cutting-edge' and 'best-in-class' — replace with specifics.", "FAQ section answers questions nobody is asking. Survey real customers for objections."] },
-  { name: "CTA Strength",         score: 7, fixes: ["Primary CTA says 'Submit' — change to 'Start my free audit'.", "Secondary CTA competes visually — reduce its weight or remove it."] },
-  { name: "Mobile & Accessibility", score: 7, fixes: ["Tap targets in nav are 28px — increase to 44px minimum.", "Hero image lacks alt text, failing basic accessibility standards."] },
-  { name: "Trust Signals",        score: 6, fixes: ["No testimonials above the fold. Add 1–2 short quotes from real customers.", "Security badge is missing near checkout — add it where anxiety peaks.", "Logo bar shows generic icons — replace with recognizable brand logos."] },
-  { name: "Friction Detection",   score: 5, fixes: ["Signup form collects 8 fields. Cut to 3 and ask more later.", "Pricing is 3 clicks from homepage — surface it in the main nav.", "Navigation has 14 top-level links. Group into 4 categories max."] },
+  { name: "Value Proposition",    score: 8, fixes: ["Lead headline mentions features, not outcomes. Rewrite around the result.", "Value prop is below the fold on mobile. Move it to the first 100px."] },
+  { name: "Copy & Tone",          score: 8, fixes: ["Description uses 'cutting-edge' and 'best-in-class'. Replace with specifics.", "FAQ section answers questions nobody is asking. Survey real customers for objections."] },
+  { name: "CTA Strength",         score: 7, fixes: ["Primary CTA says 'Submit'. Change to 'Start my free audit'.", "Secondary CTA competes visually. Reduce its weight or remove it."] },
+  { name: "Mobile & Accessibility", score: 7, fixes: ["Tap targets in nav are 28px. Increase to 44px minimum.", "Hero image lacks alt text, failing basic accessibility standards."] },
+  { name: "Trust Signals",        score: 6, fixes: ["No testimonials above the fold. Add 1-2 short quotes from real customers.", "Security badge is missing near checkout. Add it where anxiety peaks.", "Logo bar shows generic icons. Replace with recognizable brand logos."] },
+  { name: "Friction Detection",   score: 5, fixes: ["Signup form collects 8 fields. Cut to 3 and ask more later.", "Pricing is 3 clicks from homepage. Surface it in the main nav.", "Navigation has 14 top-level links. Group into 4 categories max."] },
 ];
 
 const scoreColor = (s: number) =>
-  s >= 8 ? "text-emerald-400" : s >= 6 ? "text-amber-400" : "text-rose-400";
+  s >= 8 ? "text-cyan-400" : s >= 5 ? "text-blue-400" : "text-blue-800";
 const scoreBg = (s: number) =>
-  s >= 8 ? "bg-emerald-500/10 border-emerald-500/20" : s >= 6 ? "bg-amber-500/10 border-amber-500/20" : "bg-rose-500/10 border-rose-500/20";
+  s >= 8 ? "bg-cyan-500/10 border-cyan-500/20"
+  : s >= 5 ? "bg-blue-500/10 border-blue-500/20"
+  : "bg-blue-900/20 border-blue-900/30";
 const scoreBar = (s: number) =>
-  s >= 8 ? "bg-emerald-500" : s >= 6 ? "bg-amber-500" : "bg-rose-500";
+  s >= 8 ? "bg-cyan-500" : s >= 5 ? "bg-blue-600" : "bg-[#1e3a8a]";
+const scoreHex = (s: number) =>
+  s >= 8 ? "#06b6d4" : s >= 5 ? "#2563eb" : "#1e3a8a";
 
 const MOCK_PILLARS = [
-  { name: "Value Prop",   score: 8.0, color: "#34d399" },
-  { name: "CTA Strength", score: 7.0, color: "#34d399" },
-  { name: "Trust Signals", score: 5.9, color: "#f59e0b" },
-  { name: "Copy & Tone",  score: 8.1, color: "#34d399" },
-  { name: "Friction",     score: 4.8, color: "#f87171" },
-  { name: "Mobile",       score: 7.1, color: "#34d399" },
-];
+  { name: "Value Prop",    score: 9.4 },
+  { name: "CTA Strength",  score: 8.7 },
+  { name: "Trust Signals", score: 9.1 },
+  { name: "Copy & Tone",   score: 7.3 },
+  { name: "Friction",      score: 8.3 },
+  { name: "Mobile",        score: 9.2 },
+].map(p => ({ ...p, color: scoreHex(p.score) }));
 
 const PLANS = [
   {
@@ -100,7 +104,7 @@ const PLANS = [
     price: "19.99",
     description: "For founders and marketers serious about conversion.",
     features: ["10 audits per day", "Full site audit", "Score history", "PDF export"],
-    cta: "Start Pro — $19.99/mo",
+    cta: "Start Pro, $19.99/mo",
     href: "/pricing",
   },
   {
@@ -109,10 +113,31 @@ const PLANS = [
     price: "49.99",
     description: "Built for teams running audits at scale.",
     features: ["Unlimited audits", "White-label PDF reports", "Team seats", "Priority support"],
-    cta: "Start Agency — $49.99/mo",
+    cta: "Start Agency, $49.99/mo",
     href: "/pricing",
   },
 ];
+
+function AnimatedScore({ score, delay, color }: { score: number; delay: number; color: string }) {
+  const [display, setDisplay] = useState("0.0");
+  const count = useMotionValue(0);
+
+  useEffect(() => {
+    const unsubscribe = count.on("change", (v) => setDisplay(v.toFixed(1)));
+    const controls = animate(count, score, {
+      duration: 1.3,
+      delay,
+      ease: [0.22, 1, 0.36, 1],
+    });
+    return () => { controls.stop(); unsubscribe(); };
+  }, [count, score, delay]);
+
+  return (
+    <span className="text-[11px] font-semibold tabular-nums" style={{ color }}>
+      {display}
+    </span>
+  );
+}
 
 // ─── audit card mockup ─────────────────────────────────────────
 
@@ -121,20 +146,28 @@ function AuditCardMockup() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [glare, setGlare] = useState({ x: 50, y: 50 });
   const [hovered, setHovered] = useState(false);
+  const rafRef = useRef<number | null>(null);
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const dx = e.clientX - (rect.left + rect.width / 2);
-    const dy = e.clientY - (rect.top + rect.height / 2);
-    const maxTilt = 15;
-    setTilt({
-      x: -(dy / (rect.height / 2)) * maxTilt,
-      y:  (dx / (rect.width  / 2)) * maxTilt,
-    });
-    setGlare({
-      x: ((e.clientX - rect.left) / rect.width)  * 100,
-      y: ((e.clientY - rect.top)  / rect.height) * 100,
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const dx = clientX - (rect.left + rect.width / 2);
+      const dy = clientY - (rect.top + rect.height / 2);
+      const maxTilt = 15;
+      setTilt({
+        x: -(dy / (rect.height / 2)) * maxTilt,
+        y:  (dx / (rect.width  / 2)) * maxTilt,
+      });
+      setGlare({
+        x: ((clientX - rect.left) / rect.width)  * 100,
+        y: ((clientY - rect.top)  / rect.height) * 100,
+      });
     });
   };
 
@@ -159,8 +192,9 @@ function AuditCardMockup() {
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
         style={{
-          transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transform: `perspective(1000px) translate3d(0,0,0) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
           transition: hovered ? "transform 0.1s ease-out" : "transform 0.6s ease-out",
+          willChange: "transform",
         }}
         className="relative rounded-2xl border border-white/10 bg-[#0e0e12]/95 backdrop-blur-sm shadow-[0_40px_80px_-20px_rgba(0,0,0,0.7)] overflow-hidden cursor-default"
       >
@@ -192,8 +226,8 @@ function AuditCardMockup() {
             <div>
               <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Overall grade</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-extrabold text-amber-400 leading-none">B</span>
-                <span className="text-sm text-gray-500">79 / 100</span>
+                <span className="text-4xl font-extrabold text-blue-400 leading-none">A</span>
+                <span className="text-sm text-gray-500">92 / 100</span>
               </div>
             </div>
             <div className="flex flex-col items-end gap-1">
@@ -215,9 +249,7 @@ function AuditCardMockup() {
               <div key={name} className="space-y-1">
                 <div className="flex justify-between items-center">
                   <span className="text-[11px] text-gray-400">{name}</span>
-                  <span className="text-[11px] font-semibold tabular-nums" style={{ color }}>
-                    {score.toFixed(1)}
-                  </span>
+                  <AnimatedScore score={score} delay={0.6 + i * 0.1} color={color} />
                 </div>
                 <div className="h-1 rounded-full bg-white/6 overflow-hidden">
                   <motion.div
@@ -225,7 +257,7 @@ function AuditCardMockup() {
                     style={{ backgroundColor: color }}
                     initial={{ width: 0 }}
                     animate={{ width: `${score * 10}%` }}
-                    transition={{ delay: 0.6 + i * 0.1, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ delay: 0.6 + i * 0.1, duration: 1.3, ease: [0.22, 1, 0.36, 1] }}
                   />
                 </div>
               </div>
@@ -236,7 +268,7 @@ function AuditCardMockup() {
           <div className="rounded-xl bg-rose-500/8 border border-rose-500/18 p-3 flex gap-2.5">
             <AlertTriangle className="size-3.5 text-rose-400 shrink-0 mt-0.5" strokeWidth={2} />
             <p className="text-[11px] text-gray-400 leading-relaxed">
-              <span className="text-rose-400 font-medium">Friction detected:</span> signup form has 8 fields — reduce to 3 to lift conversion.
+              <span className="text-rose-400 font-medium">Friction detected:</span> signup form has 8 fields. Reduce to 3 to lift conversion.
             </p>
           </div>
         </div>
@@ -275,20 +307,6 @@ export default function Home() {
             {/* ── LEFT: copy + input ──────────────────────────────────── */}
             <div className="flex-1 flex flex-col gap-7 max-w-xl">
 
-              {/* eyebrow */}
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="inline-flex w-fit items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-medium text-gray-400"
-              >
-                <span className="relative flex size-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-60" />
-                  <span className="relative inline-flex rounded-full size-1.5 bg-blue-500" />
-                </span>
-                AI-Powered CRO Analysis
-              </motion.div>
-
               {/* headline */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
@@ -310,7 +328,7 @@ export default function Home() {
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.16 }}
                 className="text-[17px] text-gray-400 leading-relaxed max-w-md"
               >
-                Paste any URL and get a deep CRO audit across 6 conversion pillars in under 30 seconds — no account needed.
+                Paste any URL and get a deep CRO audit across 6 conversion pillars in under 30 seconds, no account needed.
               </motion.p>
 
               {/* input */}
@@ -350,27 +368,6 @@ export default function Home() {
                 </p>
               </motion.div>
 
-              {/* feature pills */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.36 }}
-                className="flex flex-wrap gap-2"
-              >
-                {[
-                  { icon: Zap,    label: "30-second analysis" },
-                  { icon: Layers, label: "6 conversion pillars" },
-                  { icon: Unlock, label: "No signup required" },
-                ].map(({ icon: Icon, label }) => (
-                  <span
-                    key={label}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-gray-500 border border-white/8 bg-white/4"
-                  >
-                    <Icon className="size-3 text-blue-400" strokeWidth={2.5} />
-                    {label}
-                  </span>
-                ))}
-              </motion.div>
             </div>
 
             {/* ── RIGHT: animated audit card ─────────────────────────── */}
@@ -465,7 +462,7 @@ export default function Home() {
             See what a real audit looks like
           </h2>
           <p className="text-gray-400 max-w-sm leading-relaxed">
-            Here&apos;s a sample report for example.com — exactly what you get in 30 seconds.
+            Here&apos;s a sample report for example.com. Exactly what you get in 30 seconds.
           </p>
         </FadeIn>
 
@@ -473,8 +470,8 @@ export default function Home() {
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 p-7 border-b border-white/8">
               <div className="flex items-center gap-4">
-                <div className="size-14 rounded-2xl bg-gradient-to-br from-amber-400/20 to-orange-400/10 border border-amber-400/25 flex items-center justify-center shrink-0">
-                  <span className="text-2xl font-extrabold text-amber-400">B+</span>
+                <div className="size-14 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-emerald-400/10 border border-emerald-400/25 flex items-center justify-center shrink-0">
+                  <span className="text-2xl font-extrabold text-emerald-400">B+</span>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Audit report</p>

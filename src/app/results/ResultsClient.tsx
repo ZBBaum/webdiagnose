@@ -28,33 +28,33 @@ const PILLAR_LABELS: Record<keyof AuditResult["pillars"], string> = {
 };
 
 const GRADE_META: Record<string, { circle: string; badge: string }> = {
-  A: { circle: "border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" },
-  B: { circle: "border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",               badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" },
-  C: { circle: "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",          badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300" },
-  D: { circle: "border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",     badge: "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300" },
-  F: { circle: "border-red-400 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300",                    badge: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300" },
+  A: { circle: "border-cyan-400 bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300",     badge: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300" },
+  B: { circle: "border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300",     badge: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300" },
+  C: { circle: "border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",     badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" },
+  D: { circle: "border-blue-700 bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400",    badge: "bg-blue-200 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400" },
+  F: { circle: "border-blue-900 bg-blue-200 text-blue-900 dark:bg-blue-950/80 dark:text-blue-500",    badge: "bg-blue-200 text-blue-900 dark:bg-blue-950/80 dark:text-blue-500" },
 };
 
 /* ─── score helpers ──────────────────────────────────────── */
 
 function scoreTheme(score: number) {
   if (score >= 8) return {
-    headerBg: "bg-emerald-50 dark:bg-emerald-950/40",
-    headerText: "text-emerald-800 dark:text-emerald-200",
-    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
-    fill: "#059669", label: "Strong",
+    headerBg: "bg-cyan-50 dark:bg-cyan-950/40",
+    headerText: "text-cyan-800 dark:text-cyan-200",
+    badge: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300",
+    fill: "#06b6d4", label: score >= 9 ? "Excellent" : "Strong",
   };
   if (score >= 5) return {
-    headerBg: "bg-amber-50 dark:bg-amber-950/40",
-    headerText: "text-amber-800 dark:text-amber-200",
-    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
-    fill: "#d97706", label: "Fair",
+    headerBg: "bg-blue-50 dark:bg-blue-950/40",
+    headerText: "text-blue-800 dark:text-blue-200",
+    badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
+    fill: "#2563eb", label: score >= 7 ? "Fair" : "Weak",
   };
   return {
-    headerBg: "bg-red-50 dark:bg-red-950/40",
-    headerText: "text-red-800 dark:text-red-200",
-    badge: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
-    fill: "#dc2626", label: "Weak",
+    headerBg: "bg-blue-100 dark:bg-[#1e3a8a]/30",
+    headerText: "text-blue-900 dark:text-blue-300",
+    badge: "bg-blue-200 text-blue-900 dark:bg-blue-950/80 dark:text-blue-400",
+    fill: "#1e3a8a", label: "Critical",
   };
 }
 
@@ -266,12 +266,12 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
               <CardContent className="pt-5 pb-5 space-y-5">
                 {wins.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 mb-2.5">✓ Key Wins</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 mb-2.5">✓ Key Wins</p>
                     <div className="space-y-1.5">
                       {wins.map(({ label, score }) => (
                         <div key={label} className="flex items-center justify-between">
                           <span className="text-xs text-foreground">{label}</span>
-                          <span className="text-xs font-semibold text-emerald-600">{score}/10</span>
+                          <span className="text-xs font-semibold text-cyan-600 dark:text-cyan-400">{score}/10</span>
                         </div>
                       ))}
                     </div>
@@ -280,12 +280,12 @@ function ResultsView({ audit, url }: { audit: AuditResult; url: string }) {
                 {wins.length > 0 && issues.length > 0 && <hr className="border-border" />}
                 {issues.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-red-700 mb-2.5">⚠ Critical Issues</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400 mb-2.5">⚠ Critical Issues</p>
                     <div className="space-y-1.5">
                       {issues.map(({ label, score }) => (
                         <div key={label} className="flex items-center justify-between">
                           <span className="text-xs text-foreground">{label}</span>
-                          <span className="text-xs font-semibold text-red-600">{score}/10</span>
+                          <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">{score}/10</span>
                         </div>
                       ))}
                     </div>
