@@ -12,13 +12,16 @@ export type AuditRecord = {
 export async function saveAudit(
   url: string,
   audit: AuditResultV2,
-  userId?: string | null
+  userId?: string | null,
+  screenshotBase64?: string | null
 ): Promise<void> {
   const { error } = await supabase.from("audits").insert({
     url,
     overall_grade: audit.overallGrade,
     pillar_scores: audit.pillars,
     user_id: userId ?? null,
+    screenshot_base64: screenshotBase64 ?? null,
+    visual_annotations: audit.visualAnnotations ?? null,
   });
   if (error) throw new Error(error.message);
 }

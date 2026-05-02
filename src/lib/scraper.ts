@@ -49,6 +49,8 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
   );
 
+  await page.setViewport({ width: 1280, height: 800 });
+
   try {
     await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
 

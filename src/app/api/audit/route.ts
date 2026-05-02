@@ -92,11 +92,16 @@ export async function GET(request: NextRequest) {
         }
 
         // ── 4. Persist (fire-and-forget) ───────────────────────────────────
-        saveAudit(url, audit, user?.id ?? null).catch((err) =>
+        saveAudit(url, audit, user?.id ?? null, scraped.screenshotBase64).catch((err) =>
           console.error("[saveAudit]", err instanceof Error ? err.message : err)
         );
 
-        controller.enqueue(sse({ type: "result", data: audit }));
+        // Include screenshot in result so the UI can render it immediately
+        controller.enqueue(sse({
+          type: "result",
+          data: audit,
+          screenshot: scraped.screenshotBase64 ?? null,
+        }));
         controller.close();
       } catch (err) {
         const message = err instanceof Error ? err.message : "Audit failed";

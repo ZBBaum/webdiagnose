@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { AuditResultV2, PillarResultV2, TopFix } from "@/lib/auditor";
+import { useEffect, useRef, useState } from "react";
+import type { AuditResultV2, PillarResultV2, TopFix, VisualAnnotation } from "@/lib/auditor";
 import { cn } from "@/lib/utils";
 import SiteIQLogo from "@/components/SiteIQLogo";
 
@@ -42,6 +42,12 @@ const DIFFICULTY: Record<string, { label: string; cls: string }> = {
   easy:   { label: "Easy",   cls: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300" },
   medium: { label: "Medium", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
   hard:   { label: "Hard",   cls: "bg-blue-200 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200" },
+};
+
+const ANN_TYPE: Record<VisualAnnotation["type"], { border: string; bg: string; badge: string; dot: string }> = {
+  critical: { border: "rgba(239,68,68,0.85)",  bg: "rgba(239,68,68,0.1)",  badge: "#ef4444", dot: "bg-red-500" },
+  warning:  { border: "rgba(251,191,36,0.85)", bg: "rgba(251,191,36,0.1)", badge: "#f59e0b", dot: "bg-amber-400" },
+  good:     { border: "rgba(34,197,94,0.85)",  bg: "rgba(34,197,94,0.1)",  badge: "#22c55e", dot: "bg-green-500" },
 };
 
 /* ── loading view ───────────────────────────────────────────── */
@@ -108,6 +114,114 @@ function SectionHeading({ number, title, subtitle }: { number: string; title: st
   );
 }
 
+/* ── annotated screenshot viewer ────────────────────────────── */
+
+function AnnotatedScreenshot({
+  screenshot,
+  annotations,
+}: {
+  screenshot: string;
+  annotations: VisualAnnotation[];
+}) {
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <div className="space-y-3">
+      {/* scrollable viewer */}
+      <div
+        className="relative w-full rounded-xl border border-border overflow-auto bg-black/5 print:overflow-visible"
+        style={{ maxHeight: "600px" }}
+      >
+        <div ref={containerRef} className="relative inline-block w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`data:image/png;base64,${screenshot}`}
+            alt="Page screenshot"
+            className="w-full h-auto block select-none"
+            draggable={false}
+          />
+
+          {/* annotation overlays */}
+          {annotations.map((ann, i) => {
+            const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
+            const isActive = activeIdx === i;
+
+            /* decide whether tooltip should open upward */
+            const tooltipUp = ann.y > 60;
+
+            return (
+              <div
+                key={i}
+                className="absolute cursor-pointer"
+                style={{
+                  left: `${ann.x}%`,
+                  top: `${ann.y}%`,
+                  width: `${ann.width}%`,
+                  height: `${ann.height}%`,
+                  border: `2px solid ${s.border}`,
+                  background: s.bg,
+                  zIndex: isActive ? 30 : 10,
+                }}
+                onMouseEnter={() => setActiveIdx(i)}
+                onMouseLeave={() => setActiveIdx(null)}
+              >
+                {/* label badge — always visible */}
+                <span
+                  className="absolute top-0 left-0 px-1.5 py-[2px] text-[10px] font-bold text-white leading-tight whitespace-nowrap rounded-br"
+                  style={{ background: s.badge, maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis" }}
+                >
+                  {ann.label}
+                </span>
+
+                {/* tooltip — on hover */}
+                {isActive && (
+                  <div
+                    className="absolute z-50 rounded-lg shadow-xl pointer-events-none"
+                    style={{
+                      background: "#111827",
+                      color: "white",
+                      padding: "8px 12px",
+                      minWidth: "200px",
+                      maxWidth: "280px",
+                      [tooltipUp ? "bottom" : "top"]: "calc(100% + 6px)",
+                      left: 0,
+                    }}
+                  >
+                    <p className="text-[11px] font-bold mb-0.5" style={{ color: s.badge }}>{ann.label}</p>
+                    <p className="text-xs leading-snug opacity-90">{ann.description}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* annotation legend */}
+      {annotations.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {annotations.map((ann, i) => {
+            const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
+            return (
+              <button
+                key={i}
+                type="button"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                onMouseEnter={() => setActiveIdx(i)}
+                onMouseLeave={() => setActiveIdx(null)}
+              >
+                <span className={cn("w-2 h-2 rounded-full flex-shrink-0", s.dot)} />
+                {ann.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── five-second card ───────────────────────────────────────── */
 
 function FiveSecondCard({
@@ -129,7 +243,6 @@ function FiveSecondCard({
         </div>
       </div>
 
-      {/* score bar */}
       <div className="h-[3px] rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
         <div
           data-bar-fill={s.tier}
@@ -186,8 +299,6 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
   const s = sc(pillar.score);
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col break-inside-avoid">
-
-      {/* header: name + score */}
       <div className={cn("px-5 py-4 flex items-start justify-between gap-3", s.bgCls)}>
         <div>
           <p className={cn("text-[10px] font-bold uppercase tracking-widest mb-1.5", s.cls)}>
@@ -217,15 +328,11 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
         </div>
       </div>
 
-      {/* summary */}
       <div className="px-5 py-3.5 border-b border-border">
         <p className="text-sm text-muted-foreground leading-relaxed">{pillar.summary}</p>
       </div>
 
-      {/* issue + fix side-by-side */}
       <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border flex-1">
-
-        {/* issue */}
         <div className="px-4 py-4 space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Issue Found</p>
           {pillar.exactIssue ? (
@@ -240,7 +347,6 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
           )}
         </div>
 
-        {/* fix */}
         <div data-print="rewrite-panel" className="px-4 py-4 space-y-2 bg-cyan-50/60 dark:bg-cyan-950/20">
           <p
             data-print="rewrite-label"
@@ -250,10 +356,8 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
           </p>
           <p className="text-xs text-foreground leading-relaxed">{pillar.rewrite || "—"}</p>
         </div>
-
       </div>
 
-      {/* benchmark */}
       {pillar.benchmark && (
         <div className="px-5 py-2.5 border-t border-border bg-muted/30">
           <p className="text-[11px] text-muted-foreground">
@@ -262,16 +366,24 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
           </p>
         </div>
       )}
-
     </div>
   );
 }
 
 /* ── results view ───────────────────────────────────────────── */
 
-function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
+function ResultsView({
+  audit,
+  url,
+  screenshot,
+}: {
+  audit: AuditResultV2;
+  url: string;
+  screenshot: string | null;
+}) {
   const grade = (audit.overallGrade ?? "F").toUpperCase();
   const gradeRing = GRADE_RING[grade] ?? "#1e3a8a";
+  const hasAnnotations = screenshot && (audit.visualAnnotations?.length ?? 0) > 0;
 
   return (
     <div className="min-h-screen print:min-h-0">
@@ -287,7 +399,7 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
         <span className="text-xs text-gray-400 truncate max-w-xs">{url}</span>
       </div>
 
-      {/* sticky action bar (screen only) */}
+      {/* sticky action bar */}
       <div className="sticky top-[76px] z-40 bg-background/90 backdrop-blur-sm border-b border-border print:hidden">
         <div className="max-w-5xl mx-auto px-6 h-12 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -317,8 +429,6 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
       <div className="border-b border-border bg-muted/20 print:bg-transparent print:border-b print:border-gray-200">
         <div className="max-w-5xl mx-auto px-6 py-8 print:py-5">
           <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
-
-            {/* grade */}
             <div className="shrink-0 flex flex-col items-center gap-1.5">
               <div
                 data-grade={grade}
@@ -332,7 +442,6 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
               </p>
             </div>
 
-            {/* info */}
             <div className="flex-1 min-w-0 space-y-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">
@@ -376,7 +485,6 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
                 </div>
               )}
             </div>
-
           </div>
         </div>
       </div>
@@ -384,11 +492,26 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
       {/* body */}
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-14 print:space-y-10 print:py-6">
 
-        {/* 01 — five-second test */}
+        {/* 01 — visual analysis */}
+        {hasAnnotations && (
+          <section className="print:hidden">
+            <SectionHeading
+              number="01"
+              title="Visual Analysis"
+              subtitle="Annotated screenshot — hover any box to see the finding"
+            />
+            <AnnotatedScreenshot
+              screenshot={screenshot!}
+              annotations={audit.visualAnnotations}
+            />
+          </section>
+        )}
+
+        {/* 02 — five-second test */}
         {audit.fiveSecondTest && (
           <section>
             <SectionHeading
-              number="01"
+              number={hasAnnotations ? "02" : "01"}
               title="Five-Second Test"
               subtitle="What a first-time visitor understands in their first 5 seconds on the page"
             />
@@ -415,11 +538,11 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
           </section>
         )}
 
-        {/* 02 — top 3 revenue opportunities */}
+        {/* 03 — top 3 revenue opportunities */}
         {(audit.topFixes?.length ?? 0) > 0 && (
           <section>
             <SectionHeading
-              number="02"
+              number={hasAnnotations ? "03" : "02"}
               title="Top 3 Revenue Opportunities"
               subtitle="Ranked by estimated conversion impact — fix these first"
             />
@@ -431,11 +554,11 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
           </section>
         )}
 
-        {/* 03 — pillar analysis */}
+        {/* 04 — pillar analysis */}
         {(audit.pillars?.length ?? 0) > 0 && (
           <section>
             <SectionHeading
-              number="03"
+              number={hasAnnotations ? "04" : "03"}
               title="Pillar Analysis"
               subtitle="Six dimensions of conversion performance — exact issue identified and rewrite provided for each"
             />
@@ -466,6 +589,7 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
 export default function ResultsClient({ url }: { url: string }) {
   const [phase, setPhase] = useState<"loading" | "results" | "error">("loading");
   const [audit, setAudit] = useState<AuditResultV2 | null>(null);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [progress, setProgress] = useState(5);
   const [statusMsg, setStatusMsg] = useState("Connecting…");
@@ -506,7 +630,7 @@ export default function ResultsClient({ url }: { url: string }) {
         for (const chunk of chunks) {
           const line = chunk.trim();
           if (!line.startsWith("data: ")) continue;
-          let msg: { type: string; message?: string; data?: AuditResultV2 };
+          let msg: { type: string; message?: string; data?: AuditResultV2; screenshot?: string | null };
           try { msg = JSON.parse(line.slice(6)); } catch { continue; }
 
           if (msg.type === "progress") {
@@ -514,8 +638,13 @@ export default function ResultsClient({ url }: { url: string }) {
             setProgress((p) => Math.min(p + 30, 85));
           } else if (msg.type === "result" && msg.data) {
             setProgress(100);
+            const capturedScreenshot = msg.screenshot ?? null;
             setTimeout(() => {
-              if (!cancelled) { setAudit(msg.data!); setPhase("results"); }
+              if (!cancelled) {
+                setAudit(msg.data!);
+                setScreenshot(capturedScreenshot);
+                setPhase("results");
+              }
             }, 500);
           } else if (msg.type === "error") {
             if (!cancelled) { setErrorMsg(msg.message ?? "Audit failed"); setPhase("error"); }
@@ -547,5 +676,5 @@ export default function ResultsClient({ url }: { url: string }) {
     return <LoadingView progress={progress} statusMsg={statusMsg} />;
   }
 
-  return <ResultsView audit={audit!} url={url} />;
+  return <ResultsView audit={audit!} url={url} screenshot={screenshot} />;
 }

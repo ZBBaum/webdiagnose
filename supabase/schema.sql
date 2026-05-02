@@ -9,6 +9,8 @@ create table audits (
 
 -- Run this if the table already exists:
 -- alter table audits add column user_id uuid references auth.users(id);
+-- alter table audits add column if not exists screenshot_base64 text;
+-- alter table audits add column if not exists visual_annotations jsonb;
 
 create table rate_limits (
   identifier text primary key,

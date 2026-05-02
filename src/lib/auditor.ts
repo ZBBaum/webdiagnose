@@ -57,6 +57,16 @@ export interface TopFix {
   difficulty: "easy" | "medium" | "hard";
 }
 
+export interface VisualAnnotation {
+  label: string;
+  description: string;
+  type: "critical" | "warning" | "good";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface AuditResultV2 {
   classification: Classification;
   fiveSecondTest: FiveSecondTest;
@@ -64,6 +74,7 @@ export interface AuditResultV2 {
   topFixes: TopFix[];
   revenueImpact: string;
   overallGrade: string;
+  visualAnnotations: VisualAnnotation[];
 }
 
 // ─── prompt ────────────────────────────────────────────────────────────────
@@ -101,6 +112,19 @@ Surface the TOP 3 fixes ranked by revenue impact. For each:
 STEP 5 — REVENUE FRAMING
 Write one sentence estimating the revenue impact of fixing the top issues.
 
+STEP 6 — VISUAL ANNOTATIONS (only if a screenshot was provided)
+Looking at the screenshot, identify 4-8 specific on-page areas that represent critical issues, warnings, or strong elements.
+Coordinates are percentages of the FULL screenshot pixel dimensions:
+- x: left edge of the box (0 = far left, 100 = far right)
+- y: top edge of the box (0 = very top, 100 = very bottom)
+- width/height: box size as % of full screenshot dimensions
+- type: "critical" (conversion killer), "warning" (needs improvement), "good" (strong element)
+- label: ≤25 chars — concise name (e.g. "Weak CTA", "No Social Proof", "Clear Hero")
+- description: ≤100 chars — what the issue is and why it matters
+
+Focus annotations on: hero headline, primary CTA buttons, trust signals, nav, forms, pricing, social proof.
+If no screenshot was provided, return an empty array for visualAnnotations.
+
 Return ONLY valid JSON. No markdown, no preamble. Structure:
 {
   "classification": { "siteType": "", "targetCustomer": "", "primaryGoal": "" },
@@ -116,7 +140,10 @@ Return ONLY valid JSON. No markdown, no preamble. Structure:
     { "fix": "", "impact": "", "difficulty": "easy|medium|hard" }
   ],
   "revenueImpact": "",
-  "overallGrade": "A|B|C|D|F"
+  "overallGrade": "A|B|C|D|F",
+  "visualAnnotations": [
+    { "label": "", "description": "", "type": "critical|warning|good", "x": 0, "y": 0, "width": 0, "height": 0 }
+  ]
 }`;
 
 // ─── helpers ───────────────────────────────────────────────────────────────
