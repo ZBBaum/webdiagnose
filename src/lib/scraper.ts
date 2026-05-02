@@ -1,6 +1,15 @@
 import chromium from "@sparticuz/chromium-min";
 import puppeteer from "puppeteer-core";
 
+export interface ElementMapEntry {
+  text: string;
+  tag: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface ScrapedPage {
   url: string;
   title: string;
@@ -18,6 +27,7 @@ export interface ScrapedPage {
   links: { text: string; href: string }[];
   meta: { description: string | null; keywords: string | null };
   screenshotBase64: string | null;
+  elementMap: ElementMapEntry[];
 }
 
 const CHROMIUM_REMOTE_URL =
@@ -181,6 +191,7 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
 
     // Cap page height to avoid Claude token limits, then screenshot
     let screenshotBase64: string | null = null;
+    let elementMap: ElementMapEntry[] = [];
     try {
       await page.evaluate(() => {
         document.body.style.maxHeight = "10000px";
@@ -188,6 +199,55 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
         document.documentElement.style.maxHeight = "10000px";
         document.documentElement.style.overflow = "hidden";
       });
+
+      // Extract element map after CSS cap so positions match screenshot dimensions
+      try {
+        elementMap = await page.evaluate((): { text: string; tag: string; x: number; y: number; width: number; height: number }[] => {
+          const pageW = document.documentElement.scrollWidth;
+          const pageH = Math.min(document.documentElement.scrollHeight, 10000);
+          if (pageW === 0 || pageH === 0) return [];
+
+          const getText = (el: Element): string => {
+            const t = ((el as HTMLElement).innerText ?? el.textContent ?? "").trim().replace(/\s+/g, " ");
+            if (t) return t;
+            return el.getAttribute("alt") ?? el.getAttribute("aria-label") ?? el.getAttribute("placeholder") ?? "";
+          };
+
+          const TAG_SELECTORS = 'h1,h2,h3,h4,button,[role="button"],a[href],input:not([type="hidden"]),textarea,select,label,img[alt],[class*="cta"],[class*="btn"],[class*="hero"],[class*="badge"]';
+          const seen = new Set<string>();
+          const entries: { text: string; tag: string; x: number; y: number; width: number; height: number }[] = [];
+
+          document.querySelectorAll(TAG_SELECTORS).forEach((el) => {
+            const style = window.getComputedStyle(el);
+            if (style.display === "none" || style.visibility === "hidden") return;
+            const rect = el.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) return;
+            if (rect.top >= pageH || rect.bottom <= 0) return;
+
+            const text = getText(el).slice(0, 150);
+            if (!text) return;
+
+            const key = `${el.tagName.toLowerCase()}|${text}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+
+            entries.push({
+              text,
+              tag: el.tagName.toLowerCase(),
+              x: Math.round((rect.left / pageW) * 10000) / 100,
+              y: Math.round((rect.top / pageH) * 10000) / 100,
+              width: Math.round((rect.width / pageW) * 10000) / 100,
+              height: Math.round((rect.height / pageH) * 10000) / 100,
+            });
+          });
+
+          return entries.slice(0, 120);
+        });
+        console.log(`[scraper] element map: ${elementMap.length} entries`);
+      } catch (mapErr) {
+        console.warn("[scraper] element map extraction failed:", mapErr instanceof Error ? mapErr.message : mapErr);
+      }
+
       const buf = await page.screenshot({ fullPage: true, type: "png" });
       screenshotBase64 = Buffer.from(buf).toString("base64");
       console.log(`[scraper] screenshot captured, base64 size: ${Math.round(screenshotBase64.length / 1024)}KB`);
@@ -195,7 +255,7 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
       console.warn("[scraper] screenshot failed:", err instanceof Error ? err.message : err);
     }
 
-    return { url, ...result, screenshotBase64 };
+    return { url, ...result, screenshotBase64, elementMap };
   } finally {
     await browser.close();
   }

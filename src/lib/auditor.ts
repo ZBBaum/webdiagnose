@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { ScrapedPage } from "./scraper";
+import type { ScrapedPage, ElementMapEntry } from "./scraper";
 
 // ─── legacy types (UI still uses these — do not remove) ───────────────────
 
@@ -61,6 +61,7 @@ export interface VisualAnnotation {
   label: string;
   description: string;
   type: "critical" | "warning" | "good";
+  elementText?: string | null;
   x: number;
   y: number;
   width: number;
@@ -122,7 +123,17 @@ Write one sentence estimating the revenue impact of fixing the top issues.
 STEP 6 — VISUAL ANNOTATIONS (only if a screenshot was provided)
 Place 4-8 tight bounding boxes on specific, identifiable elements visible in the screenshot.
 
-COORDINATE PRECISION — CRITICAL
+ELEMENT TARGETING — MANDATORY
+The scraped content includes an ANNOTATION TARGETS list. This is the exact visible text of every interactive and structural element on the page, each prefixed with its HTML tag in brackets (e.g. "[h1] Get Started Free" or "[button] Sign Up Today").
+
+For each annotation you place:
+1. Find the element you want to flag in the ANNOTATION TARGETS list
+2. Set "elementText" to the text portion EXACTLY as it appears after the [tag] prefix — copy it character-for-character with zero changes, no truncation, no rephrasing
+3. Also fill in your best-guess x/y/width/height coordinates using the rules below (used as a fallback if the text cannot be matched)
+
+If the element you want to flag is NOT in the ANNOTATION TARGETS list, set elementText to null and rely on coordinates only.
+
+COORDINATE PRECISION — CRITICAL (fallback when elementText is null or unmatched)
 When specifying coordinates, imagine drawing the tightest possible rectangle around just the specific element you are flagging — not the section, not the surrounding whitespace, just the element itself. If you are flagging a button, the box should be the size of that button. If you are flagging a headline, the box should wrap just that text. Only include an annotation if you can see the specific element clearly in the screenshot and are confident in its position. If unsure, omit the annotation.
 
 Boxes should be no larger than 15% width and 8% height unless the element genuinely spans that area.
@@ -169,7 +180,7 @@ Return ONLY valid JSON. No markdown, no preamble. Structure:
   "revenueImpact": "",
   "overallGrade": "A|B|C|D|F",
   "visualAnnotations": [
-    { "label": "", "description": "", "type": "critical|warning|good", "x": 0, "y": 0, "width": 0, "height": 0, "refSection": "" }
+    { "label": "", "description": "", "type": "critical|warning|good", "elementText": "exact text from targets list or null", "x": 0, "y": 0, "width": 0, "height": 0, "refSection": "" }
   ]
 }`;
 
@@ -178,6 +189,23 @@ Return ONLY valid JSON. No markdown, no preamble. Structure:
 type ContentBlock =
   | { type: "text"; text: string }
   | { type: "image"; source: { type: "base64"; media_type: "image/png"; data: string } };
+
+const TAG_PRIORITY: Record<string, number> = {
+  h1: 0, h2: 1, h3: 2, h4: 3,
+  button: 4, a: 5, input: 6, select: 7, textarea: 8,
+  label: 9, img: 10,
+};
+
+function buildAnnotationTargets(elementMap: ElementMapEntry[]): string {
+  if (!elementMap.length) return "";
+  const sorted = [...elementMap].sort((a, b) => {
+    const pa = TAG_PRIORITY[a.tag] ?? 99;
+    const pb = TAG_PRIORITY[b.tag] ?? 99;
+    return pa !== pb ? pa - pb : a.y - b.y;
+  });
+  const lines = sorted.slice(0, 60).map((e) => `[${e.tag}] ${e.text.slice(0, 80)}`);
+  return `\n\nANNOTATION TARGETS (set elementText to EXACTLY the text after the [tag] prefix, copied character-for-character):\n${lines.join("\n")}`;
+}
 
 export function buildAuditMessage(page: ScrapedPage): string | ContentBlock[] {
   const data = {
@@ -192,9 +220,11 @@ export function buildAuditMessage(page: ScrapedPage): string | ContentBlock[] {
     links: page.links.slice(0, 40).map((l) => ({ text: l.text, href: l.href })),
   };
   const textContent = JSON.stringify(data, null, 2);
+  const targets = buildAnnotationTargets(page.elementMap ?? []);
+  const fullText = textContent + targets;
 
   if (!page.screenshotBase64) {
-    return textContent;
+    return fullText;
   }
 
   return [
@@ -208,9 +238,63 @@ export function buildAuditMessage(page: ScrapedPage): string | ContentBlock[] {
     },
     {
       type: "text",
-      text: `Here is the scraped content:\n${textContent}\n\nAnd here is a screenshot of the page. Use BOTH the scraped content AND what you can visually see in the screenshot to perform your audit. Reference specific visual elements you can see — layout issues, contrast problems, CTA placement, whitespace, visual hierarchy, font choices, and overall design quality.`,
+      text: `Here is the scraped content:\n${fullText}\n\nAnd here is a screenshot of the page. Use BOTH the scraped content AND what you can visually see in the screenshot to perform your audit. Reference specific visual elements you can see — layout issues, contrast problems, CTA placement, whitespace, visual hierarchy, font choices, and overall design quality.`,
     },
   ];
+}
+
+// ─── annotation coordinate resolution ─────────────────────────────────────
+
+function normalizeText(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function wordOverlap(a: string, b: string): number {
+  const wordsA = new Set(a.split(" ").filter((w) => w.length > 1));
+  const wordsB = new Set(b.split(" ").filter((w) => w.length > 1));
+  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+  let common = 0;
+  for (const w of wordsA) if (wordsB.has(w)) common++;
+  return common / Math.max(wordsA.size, wordsB.size);
+}
+
+function findBestMatch(elementText: string, elementMap: ElementMapEntry[]): ElementMapEntry | null {
+  const norm = normalizeText(elementText);
+  if (!norm) return null;
+
+  for (const entry of elementMap) {
+    if (normalizeText(entry.text) === norm) return entry;
+  }
+
+  for (const entry of elementMap) {
+    const n = normalizeText(entry.text);
+    if (n.includes(norm) || norm.includes(n)) return entry;
+  }
+
+  let best: ElementMapEntry | null = null;
+  let bestScore = 0;
+  for (const entry of elementMap) {
+    const score = wordOverlap(norm, normalizeText(entry.text));
+    if (score > bestScore) { bestScore = score; best = entry; }
+  }
+  return bestScore >= 0.6 ? best : null;
+}
+
+export function resolveAnnotations(
+  annotations: VisualAnnotation[],
+  elementMap: ElementMapEntry[]
+): void {
+  if (!elementMap.length) return;
+  for (const ann of annotations) {
+    if (!ann.elementText) continue;
+    const match = findBestMatch(ann.elementText, elementMap);
+    if (match) {
+      ann.x = match.x;
+      ann.y = match.y;
+      ann.width = match.width;
+      ann.height = match.height;
+    }
+  }
 }
 
 // ─── audit function ────────────────────────────────────────────────────────

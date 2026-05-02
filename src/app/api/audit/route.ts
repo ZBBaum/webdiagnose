@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { scrapePage } from "@/lib/scraper";
-import { AUDIT_SYSTEM_PROMPT, buildAuditMessage } from "@/lib/auditor";
+import { AUDIT_SYSTEM_PROMPT, buildAuditMessage, resolveAnnotations } from "@/lib/auditor";
 import { saveAudit } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -89,6 +89,11 @@ export async function GET(request: NextRequest) {
           }));
           controller.close();
           return;
+        }
+
+        // Resolve annotation coordinates from element map
+        if (Array.isArray(audit.visualAnnotations) && scraped.elementMap?.length) {
+          resolveAnnotations(audit.visualAnnotations, scraped.elementMap);
         }
 
         // ── 4. Persist (fire-and-forget) ───────────────────────────────────
