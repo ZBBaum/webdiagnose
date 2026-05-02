@@ -135,45 +135,75 @@ a {
 
 /* ─── print ──────────────────────────────────────────────────── */
 @media print {
-  html { color-scheme: light; }
+  @page { margin: 1.5cm; }
 
-  * {
+  /* fidelity: tell browsers to render background colors */
+  *, *::before, *::after {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
+  /* ── 1. nuclear reset ──────────────────────────────────────── */
+  *, *::before, *::after {
+    background: white !important;
+    background-color: white !important;
+    color: #111827 !important;
+    border-color: #e5e7eb !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
   body {
     background: white !important;
-    color: black !important;
+    color: #111827 !important;
+    min-height: 0 !important;
   }
 
-  [data-slot="card"] {
-    background-color: white !important;
-    border-color: #e2e8f0 !important;
-    box-shadow: none !important;
-  }
+  /* ── 2. muted text stays readable gray ─────────────────────── */
+  .text-muted-foreground { color: #6b7280 !important; }
 
-  .bg-emerald-50, .bg-amber-50, .bg-red-50, .bg-blue-50, .bg-orange-50 {
-    background-color: white !important;
-  }
+  /* ── 3. grade circle: restore brand color by grade ─────────── */
+  [data-grade="A"] { color: #06b6d4 !important; border-color: #06b6d4 !important; }
+  [data-grade="B"] { color: #2563eb !important; border-color: #2563eb !important; }
+  [data-grade="C"] { color: #3b82f6 !important; border-color: #3b82f6 !important; }
+  [data-grade="D"] { color: #1d4ed8 !important; border-color: #1d4ed8 !important; }
+  [data-grade="F"] { color: #1e3a8a !important; border-color: #1e3a8a !important; }
 
-  .text-emerald-800, .text-amber-800, .text-red-800, .text-blue-800, .text-orange-800 {
-    color: #1e293b !important;
-  }
+  /* ── 4. pillar + five-second score numbers ─────────────────── */
+  [data-score-tier="high"] { color: #0891b2 !important; }
+  [data-score-tier="mid"]  { color: #1d4ed8 !important; }
+  [data-score-tier="low"]  { color: #1e3a8a !important; }
 
-  .bg-emerald-100, .bg-amber-100, .bg-red-100, .bg-blue-100, .bg-orange-100 {
-    background-color: #f1f5f9 !important;
-    color: #334155 !important;
-  }
+  /* ── 5. score bar fills ─────────────────────────────────────── */
+  [data-bar-fill="high"] { background: #06b6d4 !important; }
+  [data-bar-fill="mid"]  { background: #2563eb !important; }
+  [data-bar-fill="low"]  { background: #1e3a8a !important; }
 
-  .print-grade-circle { background-color: transparent !important; }
-  .bg-muted { background-color: #f1f5f9 !important; }
-  .text-muted-foreground { color: #64748b !important; }
+  /* ── 6. difficulty badges ───────────────────────────────────── */
+  [data-difficulty="easy"]   { background: #ecfeff !important; color: #0e7490 !important; border-color: #a5f3fc !important; }
+  [data-difficulty="medium"] { background: #dbeafe !important; color: #1e40af !important; border-color: #93c5fd !important; }
+  [data-difficulty="hard"]   { background: #e0e7ff !important; color: #3730a3 !important; border-color: #a5b4fc !important; }
+
+  /* ── 7. section + fix number badges ────────────────────────── */
+  [data-print="section-num"],
+  [data-print="fix-num"] { background: #1d4ed8 !important; color: white !important; }
+
+  /* ── 8. issue blockquotes: light gray left border ───────────── */
+  [data-print="issue-quote"] { border-left-color: #9ca3af !important; }
+
+  /* ── 9. rewrite panel: subtle teal tint ────────────────────── */
+  [data-print="rewrite-panel"]   { background: #f0fdfa !important; }
+  [data-print="rewrite-panel"] * { background: transparent !important; }
+  [data-print="rewrite-label"]   { color: #0891b2 !important; }
+
+  /* ── 10. revenue callout ────────────────────────────────────── */
+  [data-print="revenue"]      { background: #ecfeff !important; border-color: #a5f3fc !important; }
+  [data-print="revenue"] *    { background: transparent !important; }
+  [data-print="revenue-icon"] { color: #0891b2 !important; }
+
+  /* ── 11. layout ─────────────────────────────────────────────── */
   .sticky { position: static !important; }
   [class*="backdrop-blur"] { backdrop-filter: none !important; }
-  [class*="bg-background\/"] { background-color: white !important; }
-  .lg\:grid-cols-\[280px_1fr\] { grid-template-columns: 1fr !important; }
-  [class*="rounded-2xl"], [class*="rounded-xl"] { break-inside: avoid; }
 }
 
 /* ─── base ───────────────────────────────────────────────────── */

@@ -9,6 +9,7 @@ import SiteIQLogo from "@/components/SiteIQLogo";
 
 function sc(score: number) {
   if (score >= 8) return {
+    tier: "high" as const,
     hex: "#06b6d4",
     cls: "text-cyan-500 dark:text-cyan-400",
     bgCls: "bg-cyan-50 dark:bg-cyan-950/40",
@@ -16,6 +17,7 @@ function sc(score: number) {
     label: score >= 9 ? "Excellent" : "Strong",
   };
   if (score >= 5) return {
+    tier: "mid" as const,
     hex: "#2563eb",
     cls: "text-blue-600 dark:text-blue-400",
     bgCls: "bg-blue-50 dark:bg-blue-950/30",
@@ -23,6 +25,7 @@ function sc(score: number) {
     label: score >= 7 ? "Fair" : "Weak",
   };
   return {
+    tier: "low" as const,
     hex: "#1e3a8a",
     cls: "text-blue-900 dark:text-blue-300",
     bgCls: "bg-blue-100 dark:bg-[#1e3a8a]/30",
@@ -91,6 +94,7 @@ function SectionHeading({ number, title, subtitle }: { number: string; title: st
   return (
     <div className="flex items-start gap-4 mb-6">
       <div
+        data-print="section-num"
         className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white mt-0.5"
         style={{ background: "linear-gradient(135deg,#2563eb,#06b6d4)" }}
       >
@@ -115,18 +119,28 @@ function FiveSecondCard({
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
         <div className="flex items-baseline gap-0.5">
-          <span className={cn("text-2xl font-extrabold leading-none tabular-nums", s.cls)}>{score}</span>
+          <span
+            data-score-tier={s.tier}
+            className={cn("text-2xl font-extrabold leading-none tabular-nums", s.cls)}
+          >
+            {score}
+          </span>
           <span className="text-xs font-medium text-muted-foreground">/10</span>
         </div>
       </div>
 
-      {/* mini score bar */}
+      {/* score bar */}
       <div className="h-[3px] rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${score * 10}%`, background: s.hex }} />
+        <div
+          data-bar-fill={s.tier}
+          className="h-full rounded-full"
+          style={{ width: `${score * 10}%`, background: s.hex }}
+        />
       </div>
 
       {quote && (
         <blockquote
+          data-print="issue-quote"
           className="border-l-2 pl-3 italic text-xs text-foreground leading-relaxed"
           style={{ borderColor: s.hex }}
         >
@@ -146,6 +160,7 @@ function FixCard({ index, fix }: { index: number; fix: TopFix }) {
   return (
     <div className="flex gap-4 items-start rounded-xl border border-border bg-card px-5 py-4 break-inside-avoid">
       <div
+        data-print="fix-num"
         className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold text-white"
         style={{ background: "linear-gradient(135deg,#2563eb,#06b6d4)" }}
       >
@@ -155,7 +170,10 @@ function FixCard({ index, fix }: { index: number; fix: TopFix }) {
         <p className="text-sm font-semibold text-foreground leading-snug">{fix.fix}</p>
         <p className="text-xs text-muted-foreground leading-relaxed">{fix.impact}</p>
       </div>
-      <span className={cn("shrink-0 self-start mt-0.5 px-2.5 py-1 rounded-full text-[11px] font-semibold", d.cls)}>
+      <span
+        data-difficulty={fix.difficulty}
+        className={cn("shrink-0 self-start mt-0.5 px-2.5 py-1 rounded-full text-[11px] font-semibold", d.cls)}
+      >
         {d.label}
       </span>
     </div>
@@ -176,7 +194,10 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
             {pillar.name}
           </p>
           <div className="flex items-baseline gap-1">
-            <span className={cn("text-[2.25rem] font-extrabold leading-none tabular-nums", s.cls)}>
+            <span
+              data-score-tier={s.tier}
+              className={cn("text-[2.25rem] font-extrabold leading-none tabular-nums", s.cls)}
+            >
               {pillar.score}
             </span>
             <span className="text-sm text-muted-foreground font-medium">/10</span>
@@ -187,7 +208,11 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
             {s.label}
           </span>
           <div className="w-20 h-[3px] rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${pillar.score * 10}%`, background: s.hex }} />
+            <div
+              data-bar-fill={s.tier}
+              className="h-full rounded-full"
+              style={{ width: `${pillar.score * 10}%`, background: s.hex }}
+            />
           </div>
         </div>
       </div>
@@ -204,7 +229,10 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
         <div className="px-4 py-4 space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Issue Found</p>
           {pillar.exactIssue ? (
-            <blockquote className="border-l-2 border-blue-300 dark:border-blue-700 pl-3 text-xs italic text-foreground leading-relaxed">
+            <blockquote
+              data-print="issue-quote"
+              className="border-l-2 border-blue-300 dark:border-blue-700 pl-3 text-xs italic text-foreground leading-relaxed"
+            >
               &ldquo;{pillar.exactIssue}&rdquo;
             </blockquote>
           ) : (
@@ -213,8 +241,11 @@ function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
         </div>
 
         {/* fix */}
-        <div className="px-4 py-4 space-y-2 bg-cyan-50/60 dark:bg-cyan-950/20">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+        <div data-print="rewrite-panel" className="px-4 py-4 space-y-2 bg-cyan-50/60 dark:bg-cyan-950/20">
+          <p
+            data-print="rewrite-label"
+            className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400"
+          >
             Suggested Rewrite
           </p>
           <p className="text-xs text-foreground leading-relaxed">{pillar.rewrite || "—"}</p>
@@ -274,13 +305,7 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
             </a>
             <button
               className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted transition-colors font-medium cursor-pointer"
-              onClick={() => {
-                const html = document.documentElement;
-                const wasDark = html.classList.contains("dark");
-                if (wasDark) html.classList.remove("dark");
-                window.print();
-                if (wasDark) html.classList.add("dark");
-              }}
+              onClick={() => window.print()}
             >
               Export PDF
             </button>
@@ -296,6 +321,7 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
             {/* grade */}
             <div className="shrink-0 flex flex-col items-center gap-1.5">
               <div
+                data-grade={grade}
                 className="w-20 h-20 rounded-full border-[3px] flex items-center justify-center text-4xl font-extrabold"
                 style={{ borderColor: gradeRing, color: gradeRing }}
               >
@@ -333,8 +359,12 @@ function ResultsView({ audit, url }: { audit: AuditResultV2; url: string }) {
               )}
 
               {audit.revenueImpact && (
-                <div className="flex items-start gap-2.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 px-4 py-3 max-w-xl">
+                <div
+                  data-print="revenue"
+                  className="flex items-start gap-2.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 px-4 py-3 max-w-xl"
+                >
                   <svg
+                    data-print="revenue-icon"
                     className="shrink-0 mt-0.5 w-4 h-4 text-cyan-500"
                     fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                   >
