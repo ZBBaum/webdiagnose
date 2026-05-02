@@ -133,6 +133,13 @@ a {
   to   { width: 95%; }
 }
 
+@keyframes siteiq-highlight {
+  0%   { box-shadow: 0 0 0 2px rgba(59,130,246,0.85), 0 0 20px rgba(59,130,246,0.25); }
+  55%  { box-shadow: 0 0 0 5px rgba(59,130,246,0.12); }
+  100% { box-shadow: 0 0 0 5px rgba(59,130,246,0); }
+}
+.siteiq-highlight { animation: siteiq-highlight 1.8s ease-out forwards; }
+
 /* ─── print ──────────────────────────────────────────────────── */
 @media print {
   @page { margin: 1.5cm; }

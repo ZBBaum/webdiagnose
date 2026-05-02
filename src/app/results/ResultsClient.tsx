@@ -42,11 +42,28 @@ const DIFFICULTY: Record<string, { label: string; cls: string }> = {
   hard:   { label: "Hard",   cls: "bg-blue-200 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200" },
 };
 
-const ANN_TYPE: Record<VisualAnnotation["type"], { border: string; bg: string; badge: string; dot: string }> = {
-  critical: { border: "rgba(239,68,68,0.9)",   bg: "rgba(239,68,68,0.12)",  badge: "#ef4444", dot: "bg-red-500" },
-  warning:  { border: "rgba(245,158,11,0.9)",  bg: "rgba(245,158,11,0.12)", badge: "#f59e0b", dot: "bg-amber-400" },
-  good:     { border: "rgba(34,197,94,0.9)",   bg: "rgba(34,197,94,0.12)",  badge: "#22c55e", dot: "bg-green-500" },
+/* ── annotation type colors ─────────────────────────────────── */
+
+const ANN_TYPE: Record<VisualAnnotation["type"], { border: string; badge: string; dot: string }> = {
+  critical: { border: "#ef4444", badge: "#ef4444", dot: "bg-red-500" },
+  warning:  { border: "#f59e0b", badge: "#f59e0b", dot: "bg-amber-400" },
+  good:     { border: "#22c55e", badge: "#22c55e", dot: "bg-green-500" },
 };
+
+/* ── inline cross-reference badge ───────────────────────────── */
+
+function AnnBadge({ number, type }: { number: number; type: VisualAnnotation["type"] }) {
+  const s = ANN_TYPE[type];
+  return (
+    <span
+      className="inline-flex items-center justify-center rounded-full text-white font-bold shrink-0"
+      style={{ width: 17, height: 17, fontSize: 10, lineHeight: 1, background: s.badge }}
+      title={`See annotation ${number} in the visual analysis above`}
+    >
+      {number}
+    </span>
+  );
+}
 
 /* ── canvas download ────────────────────────────────────────── */
 
@@ -66,37 +83,36 @@ async function downloadAnnotated(
     const ctx = canvas.getContext("2d")!;
     ctx.drawImage(img, 0, 0);
 
-    for (const ann of annotations) {
+    annotations.forEach((ann, i) => {
       const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
       const x = (ann.x / 100) * W;
       const y = (ann.y / 100) * H;
       const w = (ann.width / 100) * W;
       const h = (ann.height / 100) * H;
 
-      // semi-transparent fill
-      ctx.save();
-      ctx.globalAlpha = 0.15;
-      ctx.fillStyle = s.badge;
-      ctx.fillRect(x, y, w, h);
-      ctx.restore();
-
-      // border
+      // border only, no fill
       ctx.strokeStyle = s.badge;
-      ctx.lineWidth = Math.max(2, W * 0.002);
+      ctx.lineWidth = Math.max(2, W * 0.0025);
       ctx.strokeRect(x, y, w, h);
 
-      // label badge
-      const fs = Math.max(12, Math.round(W * 0.01));
-      ctx.font = `bold ${fs}px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif`;
-      const tw = ctx.measureText(ann.label).width;
-      const px = 6, py = 3;
+      // numbered circle badge
+      const r = Math.max(14, Math.round(W * 0.013));
+      const fs = Math.max(11, Math.round(r * 0.65));
+      const bx = x + r + 3;
+      const by = y + r + 3;
       ctx.fillStyle = s.badge;
-      ctx.fillRect(x, y, tw + px * 2, fs + py * 2);
+      ctx.beginPath();
+      ctx.arc(bx, by, r, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = "white";
-      ctx.fillText(ann.label, x + px, y + fs + py - 1);
-    }
+      ctx.font = `bold ${fs}px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(i + 1), bx, by);
+    });
 
-    // watermark
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
     const wfs = Math.max(13, Math.round(W * 0.011));
     ctx.font = `${wfs}px -apple-system,sans-serif`;
     ctx.fillStyle = "rgba(0,0,0,0.3)";
@@ -121,11 +137,13 @@ function AnnOverlays({
   activeIdx,
   onEnter,
   onLeave,
+  onClick,
 }: {
   annotations: VisualAnnotation[];
   activeIdx: number | null;
   onEnter: (i: number) => void;
   onLeave: () => void;
+  onClick?: (i: number) => void;
 }) {
   return (
     <>
@@ -133,39 +151,44 @@ function AnnOverlays({
         const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
         const isActive = activeIdx === i;
         const tooltipUp = ann.y > 55;
+        const clickable = !!ann.refSection && !!onClick;
 
         return (
           <div
             key={i}
-            className="absolute cursor-pointer"
+            className="absolute"
             style={{
               left: `${ann.x}%`,
               top: `${ann.y}%`,
               width: `${ann.width}%`,
               height: `${ann.height}%`,
-              border: `2px solid ${s.border}`,
-              background: s.bg,
+              border: `2px solid ${s.badge}`,
               zIndex: isActive ? 30 : 10,
+              cursor: clickable ? "pointer" : "default",
             }}
             onMouseEnter={() => onEnter(i)}
             onMouseLeave={onLeave}
+            onClick={() => clickable && onClick(i)}
           >
-            {/* label badge */}
+            {/* numbered circle badge */}
             <span
-              className="absolute top-0 left-0 text-[10px] font-bold text-white leading-tight whitespace-nowrap"
+              className="absolute flex items-center justify-center rounded-full text-white font-bold select-none pointer-events-none"
               style={{
+                width: 22,
+                height: 22,
+                fontSize: 12,
+                lineHeight: 1,
                 background: s.badge,
-                padding: "2px 5px",
-                borderBottomRightRadius: 4,
-                maxWidth: 130,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                top: 4,
+                left: 4,
+                boxShadow: "0 1px 5px rgba(0,0,0,0.55)",
+                zIndex: 5,
               }}
             >
-              {ann.label}
+              {i + 1}
             </span>
 
-            {/* tooltip */}
+            {/* hover tooltip */}
             {isActive && (
               <div
                 className="absolute z-50 rounded-lg shadow-2xl pointer-events-none"
@@ -183,6 +206,9 @@ function AnnOverlays({
                   {ann.label}
                 </p>
                 <p className="text-xs leading-snug opacity-90">{ann.description}</p>
+                {clickable && (
+                  <p className="text-[10px] mt-1.5 opacity-50">Click to jump to finding ↓</p>
+                )}
               </div>
             )}
           </div>
@@ -198,14 +224,15 @@ function FullscreenModal({
   screenshot,
   annotations,
   onClose,
+  onAnnotationClick,
 }: {
   screenshot: string;
   annotations: VisualAnnotation[];
   onClose: () => void;
+  onAnnotationClick?: (i: number) => void;
 }) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
-  // lock body scroll + Escape key
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -217,12 +244,12 @@ function FullscreenModal({
     };
   }, [onClose]);
 
+  const handleAnnClick = onAnnotationClick
+    ? (i: number) => { onClose(); setTimeout(() => onAnnotationClick(i), 150); }
+    : undefined;
+
   const modal = (
-    <div
-      className="fixed inset-0 z-[200] bg-gray-950 flex flex-col"
-      role="dialog"
-      aria-modal="true"
-    >
+    <div className="fixed inset-0 z-[200] bg-gray-950 flex flex-col" role="dialog" aria-modal="true">
       {/* header */}
       <div className="shrink-0 h-12 flex items-center justify-between gap-4 px-4 border-b border-white/10">
         <div className="flex items-center gap-3 min-w-0">
@@ -230,18 +257,14 @@ function FullscreenModal({
           <span className="text-sm font-semibold text-white">Visual Analysis</span>
           <span className="text-white/30 hidden sm:block">·</span>
           <span className="text-xs text-white/50 truncate hidden sm:block">
-            Scroll to explore full page
+            Scroll to explore · Click an annotation to jump to the finding
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* legend */}
-          <div className="hidden md:flex items-center gap-1.5">
+          <div className="hidden md:flex items-center gap-2.5">
             {(["critical", "warning", "good"] as const).map((t) => (
               <span key={t} className="flex items-center gap-1 text-[11px] text-white/60 capitalize">
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ background: ANN_TYPE[t].badge }}
-                />
+                <span className="w-2 h-2 rounded-full" style={{ background: ANN_TYPE[t].badge }} />
                 {t}
               </span>
             ))}
@@ -258,7 +281,6 @@ function FullscreenModal({
 
       {/* scrollable image */}
       <div className="flex-1 overflow-auto">
-        {/* inner: position relative so overlays work */}
         <div className="relative block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -272,13 +294,13 @@ function FullscreenModal({
             activeIdx={activeIdx}
             onEnter={setActiveIdx}
             onLeave={() => setActiveIdx(null)}
+            onClick={handleAnnClick}
           />
         </div>
       </div>
     </div>
   );
 
-  // portal so the modal renders above everything
   return typeof window !== "undefined"
     ? createPortal(modal, document.body)
     : null;
@@ -290,10 +312,12 @@ function AnnotatedScreenshot({
   screenshot,
   annotations,
   url,
+  onAnnotationClick,
 }: {
   screenshot: string;
   annotations: VisualAnnotation[];
   url: string;
+  onAnnotationClick?: (i: number) => void;
 }) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -301,9 +325,8 @@ function AnnotatedScreenshot({
 
   return (
     <div className="space-y-3">
-      {/* toolbar: legend + action buttons */}
+      {/* toolbar: legend chips + action buttons */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        {/* legend chips */}
         <div className="flex flex-wrap gap-1.5">
           {annotations.map((ann, i) => {
             const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
@@ -314,15 +337,20 @@ function AnnotatedScreenshot({
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition-colors"
                 onMouseEnter={() => setActiveIdx(i)}
                 onMouseLeave={() => setActiveIdx(null)}
+                onClick={() => onAnnotationClick?.(i)}
               >
-                <span className={cn("w-2 h-2 rounded-full shrink-0", s.dot)} />
+                <span
+                  className="flex items-center justify-center rounded-full text-white font-bold shrink-0"
+                  style={{ width: 16, height: 16, fontSize: 10, lineHeight: 1, background: s.badge }}
+                >
+                  {i + 1}
+                </span>
                 {ann.label}
               </button>
             );
           })}
         </div>
 
-        {/* action buttons */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
@@ -357,11 +385,8 @@ function AnnotatedScreenshot({
         style={{ maxHeight: "580px" }}
       >
         {/*
-          ALIGNMENT FIX:
-          - Outer div is the scroll container (overflow-auto, fixed max-height)
-          - Inner div is `position: relative; display: block` — its height equals
-            the rendered image height, so `top: y%` maps correctly to image coords
-          - Absolutely positioned overlays use percentage coords relative to this div
+          ALIGNMENT: inner div is `relative block` (not inline-block) so its
+          height equals the rendered image height, making top:y% coords correct.
         */}
         <div className="relative block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -376,16 +401,17 @@ function AnnotatedScreenshot({
             activeIdx={activeIdx}
             onEnter={setActiveIdx}
             onLeave={() => setActiveIdx(null)}
+            onClick={onAnnotationClick}
           />
         </div>
       </div>
 
-      {/* fullscreen modal */}
       {fullscreen && (
         <FullscreenModal
           screenshot={screenshot}
           annotations={annotations}
           onClose={() => setFullscreen(false)}
+          onAnnotationClick={onAnnotationClick}
         />
       )}
     </div>
@@ -488,15 +514,37 @@ function FiveSecondCard({
 
 /* ── top fix card ───────────────────────────────────────────── */
 
-function FixCard({ index, fix }: { index: number; fix: TopFix }) {
+function FixCard({
+  index,
+  fix,
+  annNumber,
+  annType,
+  isHighlighted,
+}: {
+  index: number;
+  fix: TopFix;
+  annNumber: number | null;
+  annType: VisualAnnotation["type"] | null;
+  isHighlighted: boolean;
+}) {
   const d = DIFFICULTY[fix.difficulty] ?? DIFFICULTY.medium;
   return (
-    <div className="flex gap-4 items-start rounded-xl border border-border bg-card px-5 py-4 break-inside-avoid">
+    <div
+      id={annNumber != null ? `audit-ann-${annNumber - 1}` : undefined}
+      className={cn(
+        "flex gap-4 items-start rounded-xl border border-border bg-card px-5 py-4 break-inside-avoid transition-shadow",
+        isHighlighted && "siteiq-highlight",
+      )}
+      style={{ scrollMarginTop: "140px" }}
+    >
       <div data-print="fix-num" className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold text-white" style={{ background: "linear-gradient(135deg,#2563eb,#06b6d4)" }}>
         {index + 1}
       </div>
       <div className="flex-1 min-w-0 space-y-1.5">
-        <p className="text-sm font-semibold text-foreground leading-snug">{fix.fix}</p>
+        <p className="text-sm font-semibold text-foreground leading-snug flex items-center gap-1.5 flex-wrap">
+          {fix.fix}
+          {annNumber != null && annType != null && <AnnBadge number={annNumber} type={annType} />}
+        </p>
         <p className="text-xs text-muted-foreground leading-relaxed">{fix.impact}</p>
       </div>
       <span data-difficulty={fix.difficulty} className={cn("shrink-0 self-start mt-0.5 px-2.5 py-1 rounded-full text-[11px] font-semibold", d.cls)}>
@@ -508,13 +556,33 @@ function FixCard({ index, fix }: { index: number; fix: TopFix }) {
 
 /* ── pillar card ────────────────────────────────────────────── */
 
-function PillarCard({ pillar }: { pillar: PillarResultV2 }) {
+function PillarCard({
+  pillar,
+  annNumber,
+  annType,
+  isHighlighted,
+}: {
+  pillar: PillarResultV2;
+  annNumber: number | null;
+  annType: VisualAnnotation["type"] | null;
+  isHighlighted: boolean;
+}) {
   const s = sc(pillar.score);
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col break-inside-avoid">
+    <div
+      id={annNumber != null ? `audit-ann-${annNumber - 1}` : undefined}
+      className={cn(
+        "rounded-xl border border-border bg-card overflow-hidden flex flex-col break-inside-avoid transition-shadow",
+        isHighlighted && "siteiq-highlight",
+      )}
+      style={{ scrollMarginTop: "140px" }}
+    >
       <div className={cn("px-5 py-4 flex items-start justify-between gap-3", s.bgCls)}>
         <div>
-          <p className={cn("text-[10px] font-bold uppercase tracking-widest mb-1.5", s.cls)}>{pillar.name}</p>
+          <p className={cn("text-[10px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5", s.cls)}>
+            {pillar.name}
+            {annNumber != null && annType != null && <AnnBadge number={annNumber} type={annType} />}
+          </p>
           <div className="flex items-baseline gap-1">
             <span data-score-tier={s.tier} className={cn("text-[2.25rem] font-extrabold leading-none tabular-nums", s.cls)}>
               {pillar.score}
@@ -572,6 +640,35 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
   const grade = (audit.overallGrade ?? "F").toUpperCase();
   const gradeRing = GRADE_RING[grade] ?? "#1e3a8a";
   const hasAnnotations = !!(screenshot && (audit.visualAnnotations?.length ?? 0) > 0);
+
+  // Build refSection → annotation index map
+  const annMap: Record<string, number> = {};
+  audit.visualAnnotations?.forEach((ann, i) => {
+    if (ann.refSection) annMap[ann.refSection] = i;
+  });
+
+  const [highlightedAnn, setHighlightedAnn] = useState<number | null>(null);
+  const highlightTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleAnnotationClick(i: number) {
+    const ann = audit.visualAnnotations?.[i];
+    if (!ann?.refSection) return;
+    const el = document.getElementById(`audit-ann-${i}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
+    setHighlightedAnn(i);
+    highlightTimeout.current = setTimeout(() => setHighlightedAnn(null), 2000);
+  }
+
+  function getAnn(refKey: string) {
+    const idx = annMap[refKey];
+    if (idx === undefined) return { annNumber: null, annType: null };
+    return {
+      annNumber: idx + 1,
+      annType: audit.visualAnnotations![idx].type,
+    };
+  }
 
   return (
     <div className="min-h-screen print:min-h-0">
@@ -648,8 +745,17 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
         {/* 01 — visual analysis */}
         {hasAnnotations && (
           <section className="print:hidden">
-            <SectionHeading number="01" title="Visual Analysis" subtitle="Annotated screenshot — hover any box to see the finding, or open fullscreen to explore the whole page" />
-            <AnnotatedScreenshot screenshot={screenshot!} annotations={audit.visualAnnotations} url={url} />
+            <SectionHeading
+              number="01"
+              title="Visual Analysis"
+              subtitle="Annotated screenshot — hover any box to see the finding, click to jump to the written analysis below"
+            />
+            <AnnotatedScreenshot
+              screenshot={screenshot!}
+              annotations={audit.visualAnnotations}
+              url={url}
+              onAnnotationClick={handleAnnotationClick}
+            />
           </section>
         )}
 
@@ -670,7 +776,19 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
           <section>
             <SectionHeading number={hasAnnotations ? "03" : "02"} title="Top 3 Revenue Opportunities" subtitle="Ranked by estimated conversion impact — fix these first" />
             <div className="space-y-3">
-              {audit.topFixes.map((fix, i) => <FixCard key={i} index={i} fix={fix} />)}
+              {audit.topFixes.map((fix, i) => {
+                const { annNumber, annType } = getAnn(`fix${i + 1}`);
+                return (
+                  <FixCard
+                    key={i}
+                    index={i}
+                    fix={fix}
+                    annNumber={annNumber}
+                    annType={annType}
+                    isHighlighted={annNumber != null && highlightedAnn === annNumber - 1}
+                  />
+                );
+              })}
             </div>
           </section>
         )}
@@ -680,7 +798,18 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
           <section>
             <SectionHeading number={hasAnnotations ? "04" : "03"} title="Pillar Analysis" subtitle="Six dimensions of conversion performance — exact issue and rewrite for each" />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {audit.pillars.map((pillar) => <PillarCard key={pillar.name} pillar={pillar} />)}
+              {audit.pillars.map((pillar) => {
+                const { annNumber, annType } = getAnn(pillar.name);
+                return (
+                  <PillarCard
+                    key={pillar.name}
+                    pillar={pillar}
+                    annNumber={annNumber}
+                    annType={annType}
+                    isHighlighted={annNumber != null && highlightedAnn === annNumber - 1}
+                  />
+                );
+              })}
             </div>
           </section>
         )}

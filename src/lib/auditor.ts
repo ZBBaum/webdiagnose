@@ -65,6 +65,7 @@ export interface VisualAnnotation {
   y: number;
   width: number;
   height: number;
+  refSection?: string;
 }
 
 export interface AuditResultV2 {
@@ -135,6 +136,7 @@ NEVER annotate an entire page section — only a single specific element (one bu
 - type: "critical" (conversion killer), "warning" (needs improvement), "good" (strong element)
 - label: ≤ 25 chars
 - description: ≤ 100 chars — what specifically is wrong/right and its conversion impact
+- refSection: optionally link this annotation to one specific section of the audit. Use the EXACT pillar name ("Value Proposition", "CTA Strength", "Trust Signals", "Copy Tone", "Friction", "Mobile & Accessibility") OR "fix1"/"fix2"/"fix3" for the top-priority fixes. Omit if the annotation doesn't correspond to a specific section.
 
 Focus on: primary CTA, hero headline, value proposition text, trust badges, nav, forms, pricing.
 If no screenshot was provided, return an empty array for visualAnnotations.
@@ -156,7 +158,7 @@ Return ONLY valid JSON. No markdown, no preamble. Structure:
   "revenueImpact": "",
   "overallGrade": "A|B|C|D|F",
   "visualAnnotations": [
-    { "label": "", "description": "", "type": "critical|warning|good", "x": 0, "y": 0, "width": 0, "height": 0 }
+    { "label": "", "description": "", "type": "critical|warning|good", "x": 0, "y": 0, "width": 0, "height": 0, "refSection": "" }
   ]
 }`;
 
