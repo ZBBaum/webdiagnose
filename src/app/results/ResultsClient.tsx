@@ -9,47 +9,106 @@ import { AnimatedBlobs } from "@/components/ui/blobs";
 
 /* ── score helpers ──────────────────────────────────────────── */
 
+function getScoreColor(score: number): string {
+  if (score >= 9) return "#06b6d4";
+  if (score >= 7) return "#10b981";
+  if (score >= 5) return "#f59e0b";
+  if (score >= 3) return "#f97316";
+  return "#dc2626";
+}
+
+function getScoreLabel(score: number): string {
+  if (score >= 9) return "Best in class";
+  if (score >= 7) return "Strong";
+  if (score >= 5) return "Needs work";
+  if (score >= 3) return "Weak";
+  return "Priority fix";
+}
+
 function sc(score: number) {
-  if (score >= 8) return {
-    tier: "high" as const, hex: "#06b6d4",
-    cls: "text-cyan-500 dark:text-cyan-400",
-    bgCls: "bg-cyan-50 dark:bg-cyan-950/40",
-    borderCls: "border-cyan-200 dark:border-cyan-800",
-    label: score >= 9 ? "Excellent" : "Strong",
+  if (score >= 9) return {
+    tier: "best" as const, hex: "#06b6d4",
+    cls: "text-cyan-400",
+    bgCls: "bg-cyan-950/30",
+    borderCls: "border-cyan-800/60",
+    label: getScoreLabel(score),
+  };
+  if (score >= 7) return {
+    tier: "strong" as const, hex: "#10b981",
+    cls: "text-emerald-400",
+    bgCls: "bg-emerald-950/30",
+    borderCls: "border-emerald-800/60",
+    label: getScoreLabel(score),
   };
   if (score >= 5) return {
-    tier: "mid" as const, hex: "#2563eb",
-    cls: "text-blue-600 dark:text-blue-400",
-    bgCls: "bg-blue-50 dark:bg-blue-950/30",
-    borderCls: "border-blue-200 dark:border-blue-800",
-    label: score >= 7 ? "Fair" : "Weak",
+    tier: "needs" as const, hex: "#f59e0b",
+    cls: "text-amber-400",
+    bgCls: "bg-amber-950/30",
+    borderCls: "border-amber-800/60",
+    label: getScoreLabel(score),
+  };
+  if (score >= 3) return {
+    tier: "weak" as const, hex: "#f97316",
+    cls: "text-orange-400",
+    bgCls: "bg-orange-950/30",
+    borderCls: "border-orange-800/60",
+    label: getScoreLabel(score),
   };
   return {
-    tier: "low" as const, hex: "#dc2626",
-    cls: "text-red-600 dark:text-red-400",
-    bgCls: "bg-red-50 dark:bg-red-950/30",
-    borderCls: "border-red-200 dark:border-red-800",
-    label: "Critical",
+    tier: "critical" as const, hex: "#dc2626",
+    cls: "text-red-500",
+    bgCls: "bg-red-950/30",
+    borderCls: "border-red-800/60",
+    label: getScoreLabel(score),
   };
 }
 
 const GRADE_RING: Record<string, string> = {
-  A: "#06b6d4", B: "#06b6d4", C: "#2563eb", D: "#2563eb", F: "#dc2626",
+  A: "#06b6d4",
+  B: "#10b981",
+  C: "#f59e0b",
+  D: "#f97316",
+  F: "#dc2626",
 };
 
 const DIFFICULTY: Record<string, { label: string; cls: string }> = {
-  easy:   { label: "Easy",   cls: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300" },
-  medium: { label: "Medium", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
-  hard:   { label: "Hard",   cls: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300" },
+  easy:   { label: "Easy",   cls: "bg-cyan-950/50 text-cyan-300 border border-cyan-800/60" },
+  medium: { label: "Medium", cls: "bg-amber-950/50 text-amber-300 border border-amber-800/60" },
+  hard:   { label: "Hard",   cls: "bg-red-950/50 text-red-400 border border-red-800/60" },
 };
 
 /* ── annotation type colors ─────────────────────────────────── */
 
 const ANN_TYPE: Record<VisualAnnotation["type"], { border: string; badge: string; dot: string }> = {
-  critical: { border: "#dc2626", badge: "#dc2626", dot: "bg-red-600" },
-  warning:  { border: "#2563eb", badge: "#2563eb", dot: "bg-blue-600" },
+  critical: { border: "#dc2626", badge: "#dc2626", dot: "bg-red-500" },
+  warning:  { border: "#f59e0b", badge: "#f59e0b", dot: "bg-amber-400" },
   good:     { border: "#06b6d4", badge: "#06b6d4", dot: "bg-cyan-500" },
 };
+
+/* ── annotation overlap resolution ─────────────────────────── */
+
+function boxesOverlap(a: VisualAnnotation, b: VisualAnnotation): boolean {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  );
+}
+
+function resolveAnnotationOverlaps(anns: VisualAnnotation[]): VisualAnnotation[] {
+  const result = anns.map(a => ({ ...a }));
+  for (let i = 1; i < result.length; i++) {
+    for (let j = 0; j < i; j++) {
+      let tries = 0;
+      while (boxesOverlap(result[i], result[j]) && tries < 8) {
+        result[i] = { ...result[i], y: Math.min(result[i].y + 3, 95 - result[i].height) };
+        tries++;
+      }
+    }
+  }
+  return result;
+}
 
 /* ── inline cross-reference badge ───────────────────────────── */
 
@@ -845,9 +904,10 @@ function PillarCard({
 
 function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: string; screenshot: string | null }) {
   const grade = (audit.overallGrade ?? "F").toUpperCase();
-  const gradeRing = GRADE_RING[grade] ?? "#1e3a8a";
-  // Sort top-to-bottom so badge numbers 1, 2, 3… match reading order
-  const sortedAnnotations = [...(audit.visualAnnotations ?? [])].sort((a, b) => a.y - b.y);
+  const gradeRing = GRADE_RING[grade] ?? "#dc2626";
+  // Sort top-to-bottom, then resolve overlapping boxes so all are visible and numbered sequentially
+  const rawAnnotations = [...(audit.visualAnnotations ?? [])].sort((a, b) => a.y - b.y);
+  const sortedAnnotations = resolveAnnotationOverlaps(rawAnnotations);
   const hasAnnotations = !!(screenshot && sortedAnnotations.length > 0);
 
   // Build refSection → sorted annotation index map
