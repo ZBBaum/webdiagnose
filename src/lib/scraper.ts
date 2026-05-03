@@ -33,10 +33,20 @@ export interface ScrapedPage {
 const CHROMIUM_REMOTE_URL =
   "https://github.com/Sparticuz/chromium/releases/download/v123.0.1/chromium-v123.0.1-pack.tar";
 
+const STEALTH_ARGS = ["--disable-blink-features=AutomationControlled"];
+
+const BOT_DETECTION_PHRASES = [
+  "captcha",
+  "are you a robot",
+  "verify you are human",
+  "cloudflare",
+  "access denied",
+];
+
 async function getLaunchOptions() {
   if (process.env.VERCEL) {
     return {
-      args: chromium.args,
+      args: [...chromium.args, ...STEALTH_ARGS],
       executablePath: await chromium.executablePath(CHROMIUM_REMOTE_URL),
       headless: true,
     };
@@ -45,7 +55,7 @@ async function getLaunchOptions() {
     executablePath:
       process.env.CHROMIUM_PATH ||
       "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    args: [],
+    args: STEALTH_ARGS,
     headless: true,
     defaultViewport: null,
   };
@@ -59,10 +69,22 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
   );
 
-  await page.setViewport({ width: 1280, height: 800 });
+  await page.setViewport({ width: 1440, height: 900 });
 
   try {
     await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+
+    const pageText = await page.evaluate(
+      () => document.body?.innerText?.toLowerCase() ?? ""
+    );
+    const botPhrase = BOT_DETECTION_PHRASES.find((phrase) =>
+      pageText.includes(phrase)
+    );
+    if (botPhrase) {
+      throw new Error(
+        "This website uses bot protection and cannot be audited automatically. Try a different URL."
+      );
+    }
 
     const result = await page.evaluate(() => {
       const isVisible = (el: Element): boolean => {
