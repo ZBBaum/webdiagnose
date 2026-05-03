@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const pages = await discoverLinks(url);
+    const pages = await discoverLinks(url); // returns DiscoveredPage[]
     return NextResponse.json({ pages });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to discover pages";

@@ -6,7 +6,6 @@ import SiteIQLogo from "@/components/SiteIQLogo";
 
 const MAX_PAGES = 10;
 
-// Paths sorted by business importance for pre-selection
 const IMPORTANT_PATHS = [
   "/pricing", "/price", "/plans",
   "/about", "/about-us",
@@ -33,7 +32,8 @@ function pathLabel(url: string): string {
   }
 }
 
-type PageItem = { url: string; path: string };
+type DiscoveredPage = { url: string; title: string };
+type PageItem = { url: string; path: string; title: string };
 
 export default function SelectClient({ url }: { url: string }) {
   const [discovering, setDiscovering] = useState(true);
@@ -45,11 +45,13 @@ export default function SelectClient({ url }: { url: string }) {
   useEffect(() => {
     fetch(`/api/crawl?url=${encodeURIComponent(url)}`)
       .then((r) => r.json())
-      .then(({ pages: urls, error: apiErr }: { pages?: string[]; error?: string }) => {
+      .then(({ pages: discovered, error: apiErr }: { pages?: DiscoveredPage[]; error?: string }) => {
         if (apiErr) { setError(apiErr); setDiscovering(false); return; }
-        const items: PageItem[] = (urls ?? [url]).map((u) => ({
-          url: u,
-          path: pathLabel(u),
+        const raw = discovered ?? [{ url, title: "Home" }];
+        const items: PageItem[] = raw.map((p) => ({
+          url: p.url,
+          path: pathLabel(p.url),
+          title: p.title,
         }));
         setPages(items);
 
@@ -170,12 +172,11 @@ export default function SelectClient({ url }: { url: string }) {
                       isChecked ? "bg-cyan-500/8" : atLimit ? "opacity-40" : "hover:bg-white/3",
                     ].join(" ")}
                   >
+                    {/* Checkbox */}
                     <div
                       className={[
                         "shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
-                        isChecked
-                          ? "border-cyan-500 bg-cyan-500"
-                          : "border-white/20 bg-transparent",
+                        isChecked ? "border-cyan-500 bg-cyan-500" : "border-white/20 bg-transparent",
                       ].join(" ")}
                     >
                       {isChecked && (
@@ -191,9 +192,13 @@ export default function SelectClient({ url }: { url: string }) {
                       disabled={atLimit}
                       onChange={() => toggle(page.url)}
                     />
+
+                    {/* Title + path */}
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-white/90 font-mono">{page.path}</span>
+                      <p className="text-sm text-white/90 truncate">{page.title}</p>
+                      <p className="text-xs text-white/35 font-mono mt-0.5 truncate">{page.path}</p>
                     </div>
+
                     {page.path === "/" && (
                       <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/25">
                         Homepage

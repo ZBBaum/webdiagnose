@@ -61,13 +61,45 @@ async function getLaunchOptions() {
   };
 }
 
-export async function discoverLinks(homeUrl: string): Promise<string[]> {
+export interface DiscoveredPage {
+  url: string;
+  title: string;
+}
+
+function extractSiteName(homeTitle: string): string {
+  for (const sep of [" | ", " – ", " — ", " - "]) {
+    const idx = homeTitle.lastIndexOf(sep);
+    if (idx > 0) return homeTitle.slice(idx + sep.length).trim();
+  }
+  return homeTitle.trim();
+}
+
+function stripSiteName(raw: string, siteName: string): string {
+  let t = raw.trim();
+  if (!t || !siteName) return t;
+  for (const sep of [" | ", " – ", " — ", " - "]) {
+    const suffix = sep + siteName;
+    if (t.endsWith(suffix)) return t.slice(0, t.length - suffix.length).trim();
+  }
+  return t;
+}
+
+function pathToTitle(path: string): string {
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length === 0) return "Home";
+  const last = segments[segments.length - 1];
+  return last
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export async function discoverLinks(homeUrl: string): Promise<DiscoveredPage[]> {
   const normalised = homeUrl.startsWith("http") ? homeUrl : `https://${homeUrl}`;
   let homeHostname: string;
   try {
     homeHostname = new URL(normalised).hostname;
   } catch {
-    return [normalised];
+    return [{ url: normalised, title: "Home" }];
   }
 
   const options = await getLaunchOptions();
@@ -81,29 +113,43 @@ export async function discoverLinks(homeUrl: string): Promise<string[]> {
   try {
     await page.goto(normalised, { waitUntil: "networkidle2", timeout: 30000 });
 
-    const hrefs: string[] = await page.evaluate(() =>
-      Array.from(document.querySelectorAll("a[href]"))
-        .map((el) => (el as HTMLAnchorElement).href)
-        .filter(Boolean)
-    );
+    const { pageTitle, links } = await page.evaluate(() => {
+      const pageTitle = document.title ?? "";
+      const links = Array.from(document.querySelectorAll("a[href]")).map((el) => ({
+        href: (el as HTMLAnchorElement).href,
+        // Take just the first line of the anchor text (avoid multiline nav items)
+        text: ((el as HTMLElement).innerText ?? el.textContent ?? "")
+          .split("\n")[0]
+          .trim()
+          .replace(/\s+/g, " ")
+          .slice(0, 120),
+      }));
+      return { pageTitle, links };
+    });
 
-    // Always include the homepage itself first
+    const siteName = extractSiteName(pageTitle);
+    const homeTitle = stripSiteName(pageTitle, siteName) || "Home";
+
     const homePath = new URL(normalised).pathname.replace(/\/$/, "") || "/";
     const seen = new Set<string>([homePath]);
-    const result: string[] = [normalised];
+    const result: DiscoveredPage[] = [{ url: normalised, title: homeTitle }];
 
-    for (const href of hrefs) {
+    for (const { href, text } of links) {
       try {
         const parsed = new URL(href);
         if (parsed.hostname !== homeHostname) continue;
         if (parsed.protocol !== "http:" && parsed.protocol !== "https:") continue;
         const pathKey = parsed.pathname.replace(/\/$/, "") || "/";
         if (seen.has(pathKey)) continue;
-        // Skip pure-anchor links (same path, different hash)
         if (pathKey === homePath && parsed.hash) continue;
         seen.add(pathKey);
+
+        // Use link text if it's a meaningful label; otherwise derive from path
+        const cleanText = text.replace(/[^\w\s'"-]/g, "").trim();
+        const title = cleanText.length >= 2 ? cleanText : pathToTitle(pathKey);
+
         const clean = `${parsed.origin}${parsed.pathname}`;
-        result.push(clean);
+        result.push({ url: clean, title });
         if (result.length >= 20) break;
       } catch {
         // skip malformed URLs
