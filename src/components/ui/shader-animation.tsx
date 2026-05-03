@@ -28,10 +28,8 @@ export function ShaderAnimation() {
 
         vec3 color = vec3(0.0);
         for (int j = 0; j < 3; j++) {
-          for (int i = 0; i < 5; i++) {
-            // Phase stagger 0.18 per ring — keeps rings spread across the full
-            // cycle so there is never a dark gap when fract() wraps
-            color[j] += lineWidth * float(i * i + 1) / abs(
+          for (int i = 0; i < 1; i++) {
+            color[j] += lineWidth * 1.0 / abs(
               fract(t - 0.005 * float(j) + float(i) * 0.18) * 5.0
               - length(uv)
               + mod(uv.x + uv.y, 0.2)
@@ -85,7 +83,7 @@ export function ShaderAnimation() {
     let rafId: number
     const animate = () => {
       rafId = requestAnimationFrame(animate)
-      uniforms.time.value += 0.02
+      uniforms.time.value = (uniforms.time.value + 0.02) % 100.0
       renderer.render(scene, camera)
     }
     animate()
