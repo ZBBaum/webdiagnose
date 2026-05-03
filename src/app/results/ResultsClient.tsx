@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import type { AuditResultV2, PillarResultV2, TopFix, VisualAnnotation } from "@/lib/auditor";
 import { cn } from "@/lib/utils";
 import SiteIQLogo from "@/components/SiteIQLogo";
-import { ShaderAnimation } from "@/components/ui/shader-animation";
+import { RadarAnimation } from "@/components/ui/radar-animation";
 
 /* ── score helpers ──────────────────────────────────────────── */
 
@@ -609,37 +609,44 @@ function SplitAnnotationPanel({
 
 /* ── loading view ───────────────────────────────────────────── */
 
-function LoadingView({ progress, statusMsg }: { progress: number; statusMsg: string }) {
-  const [visible, setVisible] = useState(true);
-  const [displayed, setDisplayed] = useState(statusMsg);
+const RADAR_MESSAGES = [
+  "Scanning your headlines...",
+  "Analyzing trust signals...",
+  "Checking CTA strength...",
+  "Generating recommendations...",
+];
+
+function LoadingView({ progress }: { progress: number; statusMsg: string }) {
+  const [msgIdx, setMsgIdx] = useState(0);
+  const [msgVisible, setMsgVisible] = useState(true);
 
   useEffect(() => {
-    if (statusMsg === displayed) return;
-    setVisible(false);
-    const t = setTimeout(() => { setDisplayed(statusMsg); setVisible(true); }, 220);
-    return () => clearTimeout(t);
-  }, [statusMsg, displayed]);
+    const t = setInterval(() => {
+      setMsgVisible(false);
+      setTimeout(() => {
+        setMsgIdx((i) => (i + 1) % RADAR_MESSAGES.length);
+        setMsgVisible(true);
+      }, 220);
+    }, 3000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="relative min-h-[calc(100vh-76px)] flex items-center justify-center px-6 overflow-hidden">
-      {/* shader background */}
-      <ShaderAnimation />
-      {/* subtle dark vignette so text stays readable */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(9,9,9,0.45) 0%, rgba(9,9,9,0.75) 100%)",
-        }}
-      />
+      {/* radar background */}
+      <RadarAnimation />
       {/* content */}
       <div className="relative z-10 flex flex-col items-center gap-10 w-full max-w-xs text-center">
+        {/* frosted backdrop only behind the content panel */}
+        <div className="absolute -inset-8 rounded-3xl bg-black/40 backdrop-blur-sm -z-10 pointer-events-none" />
         <div className="flex flex-col items-center gap-3">
-          <SiteIQLogo size={48} className="shadow-lg drop-shadow-[0_0_18px_rgba(6,182,212,0.5)]" />
+          <SiteIQLogo size={48} className="drop-shadow-[0_0_20px_rgba(6,182,212,0.6)]" />
           <span className="text-sm font-semibold tracking-tight text-white/90">SiteIQ</span>
         </div>
         <div className="w-full space-y-3.5">
-          <h2 className="text-lg font-semibold text-white">Analyzing your site</h2>
+          <h2 className="text-lg font-semibold text-white" style={{ textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>
+            Analyzing your site
+          </h2>
           <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden">
             <div
               className="h-full rounded-full"
@@ -653,9 +660,9 @@ function LoadingView({ progress, statusMsg }: { progress: number; statusMsg: str
           </div>
           <p
             className="text-sm text-white/60 transition-opacity duration-200"
-            style={{ opacity: visible ? 1 : 0 }}
+            style={{ opacity: msgVisible ? 1 : 0, textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}
           >
-            {displayed}
+            {RADAR_MESSAGES[msgIdx]}
           </p>
         </div>
       </div>
