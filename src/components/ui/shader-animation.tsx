@@ -5,13 +5,6 @@ import * as THREE from "three"
 
 export function ShaderAnimation() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const sceneRef = useRef<{
-    camera: THREE.Camera
-    scene: THREE.Scene
-    renderer: THREE.WebGLRenderer
-    uniforms: { time: { value: number }; resolution: { value: THREE.Vector2 } }
-    animationId: number
-  } | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -23,7 +16,6 @@ export function ShaderAnimation() {
       }
     `
 
-    // Black background + cyan/teal rings matching SiteIQ brand colors
     const fragmentShader = `
       precision highp float;
       uniform vec2 resolution;
@@ -32,25 +24,27 @@ export function ShaderAnimation() {
       void main(void) {
         vec2 uv = (gl_FragCoord.xy * 2.0 - resolution.xy) / min(resolution.x, resolution.y);
         float t = time * 0.05;
-        float lineWidth = 0.0025;
+        float lineWidth = 0.003;
 
         vec3 color = vec3(0.0);
-        for(int j = 0; j < 3; j++){
-          for(int i = 0; i < 5; i++){
-            color[j] += lineWidth * float(i * i) / abs(
-              fract(t - 0.01 * float(j) + float(i) * 0.01) * 5.0
+        for (int j = 0; j < 3; j++) {
+          for (int i = 0; i < 5; i++) {
+            // Phase stagger 0.18 per ring — keeps rings spread across the full
+            // cycle so there is never a dark gap when fract() wraps
+            color[j] += lineWidth * float(i * i + 1) / abs(
+              fract(t - 0.005 * float(j) + float(i) * 0.18) * 5.0
               - length(uv)
               + mod(uv.x + uv.y, 0.2)
             );
           }
         }
 
-        // Shift toward cyan (#06b6d4) and SiteIQ blue (#2563eb) — suppress red
-        float r = color[0] * 0.08;
-        float g = color[1] * 0.78;
-        float b = color[2] * 0.96;
+        // Blue-teal palette (#2563eb / #06b6d4): red low, green mid, blue high
+        float r = color[0] * 0.10;
+        float g = color[1] * 0.45;
+        float b = color[2] * 0.95;
 
-        gl_FragColor = vec4(r, g, b, 1.0);
+        gl_FragColor = vec4(clamp(r, 0.0, 1.0), clamp(g, 0.0, 1.0), clamp(b, 0.0, 1.0), 1.0);
       }
     `
 
@@ -61,7 +55,7 @@ export function ShaderAnimation() {
     const geometry = new THREE.PlaneGeometry(2, 2)
 
     const uniforms = {
-      time: { value: 10.0 }, // start mid-animation — rings visible on frame 1
+      time: { value: 10.0 },
       resolution: { value: new THREE.Vector2() },
     }
 
@@ -84,30 +78,27 @@ export function ShaderAnimation() {
     onWindowResize()
     window.addEventListener("resize", onWindowResize, false)
 
-    // Render immediately — eliminates the black flash before rAF fires
+    // Render one frame immediately so there is no black flash before rAF fires
     renderer.render(scene, camera)
 
-    sceneRef.current = { camera, scene, renderer, uniforms, animationId: 0 }
-
+    // Single continuous loop — time increments forever, never resets
+    let rafId: number
     const animate = () => {
-      const animationId = requestAnimationFrame(animate)
+      rafId = requestAnimationFrame(animate)
       uniforms.time.value += 0.05
       renderer.render(scene, camera)
-      if (sceneRef.current) sceneRef.current.animationId = animationId
     }
     animate()
 
     return () => {
+      cancelAnimationFrame(rafId)
       window.removeEventListener("resize", onWindowResize)
-      if (sceneRef.current) {
-        cancelAnimationFrame(sceneRef.current.animationId)
-        if (container && sceneRef.current.renderer.domElement.parentNode === container) {
-          container.removeChild(sceneRef.current.renderer.domElement)
-        }
-        sceneRef.current.renderer.dispose()
-        geometry.dispose()
-        material.dispose()
+      if (container && renderer.domElement.parentNode === container) {
+        container.removeChild(renderer.domElement)
       }
+      renderer.dispose()
+      geometry.dispose()
+      material.dispose()
     }
   }, [])
 
