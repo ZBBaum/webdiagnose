@@ -18,7 +18,7 @@ export function AnimatedBlobs() {
     maskClip: 'padding-box, border-box',
     maskComposite: 'intersect',
     mixBlendMode: 'screen' as const,
-    height: '80vmin',
+    height: '62vmin',
     filter: 'blur(1vmin)',
   } as React.CSSProperties
 
@@ -32,7 +32,7 @@ export function AnimatedBlobs() {
   return (
     <div
       className="min-h-screen w-full flex items-center justify-center overflow-hidden"
-      style={{ background: '#0a0a0f' }}
+      style={{ background: '#0a0a0f', paddingBottom: '18vh' }}
     >
       <div style={{ filter: 'drop-shadow(0 0 40px #06b6d4)', gridTemplateAreas: "'stack'" }} className="grid">
         <div
