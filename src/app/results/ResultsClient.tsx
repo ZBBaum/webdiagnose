@@ -632,37 +632,34 @@ function LoadingView({ progress }: { progress: number; statusMsg: string }) {
   }, []);
 
   return (
-    <div className="relative min-h-[calc(100vh-76px)] flex items-center justify-center px-6 overflow-hidden" style={{ background: '#0a0a0f' }}>
-      {/* blob background — clipped to loading container */}
+    <div className="relative min-h-[calc(100vh-76px)] flex items-center justify-center overflow-hidden" style={{ background: '#0a0a0f' }}>
+      {/* blob background */}
       <div className="absolute inset-0 overflow-hidden">
         <AnimatedBlobs />
       </div>
-      {/* content */}
-      <div className="relative z-10 flex flex-col items-center gap-10 w-full max-w-xs text-center">
-        {/* frosted backdrop only behind the content panel */}
-        <div className="absolute -inset-8 rounded-3xl bg-black/50 backdrop-blur-md -z-10 pointer-events-none" />
-        <div className="flex flex-col items-center gap-3">
-          <SiteIQLogo size={48} className="drop-shadow-[0_0_20px_rgba(6,182,212,0.6)]" />
-          <span className="text-sm font-semibold tracking-tight text-white/90">SiteIQ</span>
+      {/* content — centered over blobs */}
+      <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-[280px] text-center">
+        <div className="flex flex-col items-center gap-2">
+          <SiteIQLogo size={40} className="opacity-90" />
+          <span className="text-sm font-semibold tracking-wide text-white/70">SiteIQ</span>
         </div>
-        <div className="w-full space-y-3.5">
-          <h2 className="text-lg font-semibold text-white" style={{ textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>
+        <div className="w-full space-y-3">
+          <h2 className="text-base font-semibold text-white/90">
             Analyzing your site
           </h2>
-          <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden">
+          <div className="w-full h-[2px] rounded-full bg-white/10 overflow-hidden">
             <div
               className="h-full rounded-full"
               style={{
                 width: `${progress}%`,
                 background: "linear-gradient(90deg,#2563eb,#06b6d4)",
                 transition: "width 0.4s ease",
-                boxShadow: "0 0 10px rgba(6,182,212,0.6)",
               }}
             />
           </div>
           <p
-            className="text-sm text-white/60 transition-opacity duration-200"
-            style={{ opacity: msgVisible ? 1 : 0, textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}
+            className="text-xs text-white/40 transition-opacity duration-200"
+            style={{ opacity: msgVisible ? 1 : 0 }}
           >
             {RADAR_MESSAGES[msgIdx]}
           </p>
