@@ -7,6 +7,10 @@ import { cn } from "@/lib/utils";
 import SiteIQLogo from "@/components/SiteIQLogo";
 import { AnimatedBlobs } from "@/components/ui/blobs";
 
+/* ── multi-page types ───────────────────────────────────────── */
+
+type PageResult = { url: string; audit: AuditResultV2; screenshot: string | null };
+
 /* ── score helpers ──────────────────────────────────────────── */
 
 function getScoreColor(score: number): string {
@@ -675,7 +679,7 @@ const RADAR_MESSAGES = [
   "Generating recommendations...",
 ];
 
-function LoadingView({ progress }: { progress: number; statusMsg: string }) {
+function LoadingView({ progress, pageInfo }: { progress: number; statusMsg: string; pageInfo?: { current: number; total: number } | null }) {
   const [msgIdx, setMsgIdx] = useState(0);
   const [msgVisible, setMsgVisible] = useState(true);
 
@@ -704,8 +708,24 @@ function LoadingView({ progress }: { progress: number; statusMsg: string }) {
         </div>
         <div className="w-full space-y-3">
           <h2 className="text-base font-semibold text-white/90">
-            Analyzing your site
+            {pageInfo ? `Auditing page ${pageInfo.current} of ${pageInfo.total}` : "Analyzing your site"}
           </h2>
+          {/* multi-page step indicators */}
+          {pageInfo && pageInfo.total > 1 && (
+            <div className="flex items-center justify-center gap-1.5">
+              {Array.from({ length: pageInfo.total }).map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    width: i < pageInfo.current ? 20 : 6,
+                    height: 6,
+                    background: i < pageInfo.current ? "#06b6d4" : "rgba(255,255,255,0.15)",
+                  }}
+                />
+              ))}
+            </div>
+          )}
           <div className="w-full h-[2px] rounded-full bg-white/10 overflow-hidden">
             <div
               className="h-full rounded-full"
@@ -1080,23 +1100,261 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
   );
 }
 
+/* ── site overview (multi-page) ─────────────────────────────── */
+
+function gradeToGpa(grade: string): number {
+  return { A: 4, B: 3, C: 2, D: 1, F: 0 }[grade] ?? 0;
+}
+function gpaToGrade(avg: number): string {
+  if (avg >= 3.5) return "A";
+  if (avg >= 2.5) return "B";
+  if (avg >= 1.5) return "C";
+  if (avg >= 0.5) return "D";
+  return "F";
+}
+
+function SiteOverview({ pages }: { pages: PageResult[] }) {
+  const siteGrade = gpaToGrade(
+    pages.reduce((s, p) => s + gradeToGpa(p.audit.overallGrade ?? "F"), 0) / pages.length
+  );
+  const siteColor = GRADE_RING[siteGrade] ?? "#dc2626";
+
+  // Biggest wins: first topFix from each page, deduplicated by text prefix, max 3
+  type Win = { fix: TopFix; pageUrl: string };
+  const seen = new Set<string>();
+  const wins: Win[] = [];
+  for (const page of pages) {
+    for (const fix of page.audit.topFixes ?? []) {
+      const key = fix.fix.slice(0, 40).toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        wins.push({ fix, pageUrl: page.url });
+        if (wins.length >= 3) break;
+      }
+    }
+    if (wins.length >= 3) break;
+  }
+
+  function pagePath(u: string) {
+    try { return new URL(u).pathname || "/"; } catch { return u; }
+  }
+
+  return (
+    <div className="min-h-screen print:min-h-0">
+      {/* sticky bar */}
+      <div className="sticky top-[76px] z-40 bg-background/90 backdrop-blur-sm border-b border-border print:hidden">
+        <div className="max-w-5xl mx-auto px-6 h-12 flex items-center gap-3">
+          <span className="shrink-0 w-6 h-6 rounded-full border-[2px] flex items-center justify-center text-[11px] font-extrabold" style={{ borderColor: siteColor, color: siteColor }}>
+            {siteGrade}
+          </span>
+          <span className="text-sm text-muted-foreground">Site Overview — {pages.length} pages audited</span>
+          <div className="flex-1" />
+          <a href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">New audit</a>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6 py-10 space-y-12">
+
+        {/* Overall grade */}
+        <div className="flex items-center gap-8">
+          <div className="flex flex-col items-center gap-1.5 shrink-0">
+            <div
+              className="w-24 h-24 rounded-full border-[3px] flex items-center justify-center text-5xl font-extrabold"
+              style={{ borderColor: siteColor, color: siteColor }}
+            >
+              {siteGrade}
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Site Grade</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">
+              {siteGrade === "A" ? "Excellent across the board" :
+               siteGrade === "B" ? "Strong performance, a few gaps" :
+               siteGrade === "C" ? "Room for improvement" :
+               siteGrade === "D" ? "Significant issues found" :
+               "Critical issues — act now"}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Average across {pages.length} audited page{pages.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+
+        {/* Page comparison table */}
+        <section>
+          <h2 className="text-lg font-bold text-foreground mb-4">Page Comparison</h2>
+          <div className="rounded-xl border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Page</th>
+                  <th className="text-center px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground w-20">Grade</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Top Issue</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {pages.map((page) => {
+                  const grade = (page.audit.overallGrade ?? "F").toUpperCase();
+                  const color = GRADE_RING[grade] ?? "#dc2626";
+                  const topFix = page.audit.topFixes?.[0];
+                  return (
+                    <tr key={page.url} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-5 py-3.5 font-mono text-sm text-foreground">{pagePath(page.url)}</td>
+                      <td className="px-4 py-3.5 text-center">
+                        <span
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 text-sm font-extrabold"
+                          style={{ borderColor: color, color }}
+                        >
+                          {grade}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground max-w-xs">
+                        {topFix ? topFix.fix : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Biggest wins */}
+        {wins.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-foreground mb-1">Biggest Wins Across Your Site</h2>
+            <p className="text-sm text-muted-foreground mb-4">The highest-impact fixes to prioritize first</p>
+            <div className="space-y-3">
+              {wins.map(({ fix, pageUrl }, i) => {
+                const d = DIFFICULTY[fix.difficulty] ?? DIFFICULTY.medium;
+                return (
+                  <div key={i} className="flex gap-4 items-start rounded-xl border border-border bg-card px-5 py-4">
+                    <div
+                      className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold text-white"
+                      style={{ background: "linear-gradient(135deg,#2563eb,#06b6d4)" }}
+                    >
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-sm font-semibold text-foreground leading-snug">{fix.fix}</p>
+                      <p className="text-xs text-muted-foreground">{fix.impact}</p>
+                      <p className="text-[11px] text-muted-foreground/60 font-mono">{pagePath(pageUrl)}</p>
+                    </div>
+                    <span className={cn("shrink-0 self-start mt-0.5 px-2.5 py-1 rounded-full text-[11px] font-semibold", d.cls)}>
+                      {d.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── multi-page tab bar ─────────────────────────────────────── */
+
+function MultiPageView({ pages, url }: { pages: PageResult[]; url: string }) {
+  const [activeTab, setActiveTab] = useState(0);
+
+  function tabLabel(pageUrl: string) {
+    try { return new URL(pageUrl).pathname || "/"; } catch { return pageUrl; }
+  }
+
+  return (
+    <div>
+      {/* Tab bar */}
+      <div className="sticky top-[76px] z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex items-center gap-1 overflow-x-auto py-0 hide-scrollbar">
+            {/* Site Overview tab */}
+            <button
+              type="button"
+              onClick={() => setActiveTab(0)}
+              className={cn(
+                "shrink-0 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                activeTab === 0
+                  ? "border-cyan-500 text-cyan-400"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Site Overview
+            </button>
+
+            {/* Per-page tabs */}
+            {pages.map((page, i) => {
+              const grade = (page.audit.overallGrade ?? "F").toUpperCase();
+              const color = GRADE_RING[grade] ?? "#dc2626";
+              return (
+                <button
+                  key={page.url}
+                  type="button"
+                  onClick={() => setActiveTab(i + 1)}
+                  className={cn(
+                    "shrink-0 flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                    activeTab === i + 1
+                      ? "border-cyan-500 text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span className="font-mono">{tabLabel(page.url)}</span>
+                  <span
+                    className="text-[10px] font-bold leading-none w-5 h-5 rounded-full border flex items-center justify-center"
+                    style={{ borderColor: color, color }}
+                  >
+                    {grade}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Tab content */}
+      {activeTab === 0 ? (
+        <SiteOverview pages={pages} />
+      ) : (
+        <ResultsView
+          audit={pages[activeTab - 1].audit}
+          url={pages[activeTab - 1].url}
+          screenshot={pages[activeTab - 1].screenshot}
+        />
+      )}
+    </div>
+  );
+}
+
 /* ── main export ────────────────────────────────────────────── */
 
-export default function ResultsClient({ url }: { url: string }) {
+export default function ResultsClient({ url, urls }: { url: string; urls?: string }) {
+  const isMultiPage = !!urls;
+
   const [phase, setPhase] = useState<"loading" | "results" | "error">("loading");
+  // Single-page state
   const [audit, setAudit] = useState<AuditResultV2 | null>(null);
   const [screenshot, setScreenshot] = useState<string | null>(null);
+  // Multi-page state
+  const [pages, setPages] = useState<PageResult[]>([]);
+  // Shared loading state
   const [errorMsg, setErrorMsg] = useState("");
   const [progress, setProgress] = useState(5);
   const [statusMsg, setStatusMsg] = useState("Connecting…");
+  const [pageInfo, setPageInfo] = useState<{ current: number; total: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function run() {
+      const fetchUrl = isMultiPage
+        ? `/api/audit?urls=${encodeURIComponent(urls!)}`
+        : `/api/audit?url=${encodeURIComponent(url)}`;
+
       let res: Response;
       try {
-        res = await fetch(`/api/audit?url=${encodeURIComponent(url)}`);
+        res = await fetch(fetchUrl);
       } catch {
         if (!cancelled) { setErrorMsg("Network error — could not reach the server."); setPhase("error"); }
         return;
@@ -1123,17 +1381,34 @@ export default function ResultsClient({ url }: { url: string }) {
         for (const chunk of chunks) {
           const line = chunk.trim();
           if (!line.startsWith("data: ")) continue;
-          let msg: { type: string; message?: string; data?: AuditResultV2; screenshot?: string | null };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let msg: any;
           try { msg = JSON.parse(line.slice(6)); } catch { continue; }
 
           if (msg.type === "progress") {
             setStatusMsg(msg.message ?? "Analyzing…");
-            setProgress((p) => Math.min(p + 30, 85));
+            if (msg.pageIndex !== undefined && msg.total !== undefined) {
+              setPageInfo({ current: msg.pageIndex + 1, total: msg.total });
+              setProgress(Math.max(5, Math.round((msg.pageIndex / msg.total) * 95)));
+            } else {
+              setProgress((p) => Math.min(p + 30, 85));
+            }
           } else if (msg.type === "result" && msg.data) {
+            // Single-page result
             const snap = msg.screenshot ?? null;
             setProgress(100);
             setTimeout(() => {
-              if (!cancelled) { setAudit(msg.data!); setScreenshot(snap); setPhase("results"); }
+              if (!cancelled) { setAudit(msg.data); setScreenshot(snap); setPhase("results"); }
+            }, 500);
+          } else if (msg.type === "page_result" && msg.data) {
+            // Multi-page: accumulate results
+            const result: PageResult = { url: msg.url, audit: msg.data, screenshot: msg.screenshot ?? null };
+            if (!cancelled) setPages((prev) => [...prev, result]);
+            setProgress(Math.round(((msg.pageIndex + 1) / msg.total) * 95));
+          } else if (msg.type === "complete") {
+            setProgress(100);
+            setTimeout(() => {
+              if (!cancelled) setPhase("results");
             }, 500);
           } else if (msg.type === "error") {
             if (!cancelled) { setErrorMsg(msg.message ?? "Audit failed"); setPhase("error"); }
@@ -1144,7 +1419,7 @@ export default function ResultsClient({ url }: { url: string }) {
 
     run();
     return () => { cancelled = true; };
-  }, [url]);
+  }, [url, urls, isMultiPage]);
 
   if (phase === "error") {
     return (
@@ -1159,7 +1434,11 @@ export default function ResultsClient({ url }: { url: string }) {
     );
   }
 
-  if (phase === "loading") return <LoadingView progress={progress} statusMsg={statusMsg} />;
+  if (phase === "loading") return <LoadingView progress={progress} statusMsg={statusMsg} pageInfo={pageInfo} />;
+
+  if (isMultiPage && pages.length > 0) {
+    return <MultiPageView pages={pages} url={url} />;
+  }
 
   return <ResultsView audit={audit!} url={url} screenshot={screenshot} />;
 }

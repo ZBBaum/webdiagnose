@@ -4,9 +4,11 @@ import ResultsClient from "./ResultsClient";
 export default async function ResultsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ url?: string }>;
+  searchParams: Promise<{ url?: string; urls?: string }>;
 }) {
-  const { url } = await searchParams;
-  if (!url) redirect("/");
-  return <ResultsClient url={url} />;
+  const { url, urls } = await searchParams;
+  if (!url && !urls) redirect("/");
+  // For multi-page, derive a display URL from the first entry
+  const effectiveUrl = url ?? urls!.split(",")[0] ?? "";
+  return <ResultsClient url={effectiveUrl} urls={urls} />;
 }

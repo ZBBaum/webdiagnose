@@ -339,7 +339,7 @@ export default function Home() {
                 className="w-full max-w-md"
               >
                 <div className="relative w-full rounded-2xl border border-white/12 bg-white/5 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-200 has-[input:focus]:border-blue-500/50 has-[input:focus]:ring-4 has-[input:focus]:ring-blue-500/10">
-                  <form action="/results" method="GET" className="flex items-center p-2 gap-2">
+                  <form action="/select" method="GET" className="flex items-center p-2 gap-2">
                     <div className="flex items-center flex-1 gap-3 pl-4 pr-2">
                       <svg className="size-4 shrink-0 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />

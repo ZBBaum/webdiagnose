@@ -61,6 +61,61 @@ async function getLaunchOptions() {
   };
 }
 
+export async function discoverLinks(homeUrl: string): Promise<string[]> {
+  const normalised = homeUrl.startsWith("http") ? homeUrl : `https://${homeUrl}`;
+  let homeHostname: string;
+  try {
+    homeHostname = new URL(normalised).hostname;
+  } catch {
+    return [normalised];
+  }
+
+  const options = await getLaunchOptions();
+  const browser = await puppeteer.launch(options);
+  const page = await browser.newPage();
+  await page.setUserAgent(
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+  );
+  await page.setViewport({ width: 1440, height: 900 });
+
+  try {
+    await page.goto(normalised, { waitUntil: "networkidle2", timeout: 30000 });
+
+    const hrefs: string[] = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("a[href]"))
+        .map((el) => (el as HTMLAnchorElement).href)
+        .filter(Boolean)
+    );
+
+    // Always include the homepage itself first
+    const homePath = new URL(normalised).pathname.replace(/\/$/, "") || "/";
+    const seen = new Set<string>([homePath]);
+    const result: string[] = [normalised];
+
+    for (const href of hrefs) {
+      try {
+        const parsed = new URL(href);
+        if (parsed.hostname !== homeHostname) continue;
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") continue;
+        const pathKey = parsed.pathname.replace(/\/$/, "") || "/";
+        if (seen.has(pathKey)) continue;
+        // Skip pure-anchor links (same path, different hash)
+        if (pathKey === homePath && parsed.hash) continue;
+        seen.add(pathKey);
+        const clean = `${parsed.origin}${parsed.pathname}`;
+        result.push(clean);
+        if (result.length >= 20) break;
+      } catch {
+        // skip malformed URLs
+      }
+    }
+
+    return result;
+  } finally {
+    await browser.close();
+  }
+}
+
 export async function scrapePage(url: string): Promise<ScrapedPage> {
   const options = await getLaunchOptions();
   const browser = await puppeteer.launch(options);

@@ -13,16 +13,20 @@ export async function saveAudit(
   url: string,
   audit: AuditResultV2,
   userId?: string | null,
-  screenshotBase64?: string | null
+  screenshotBase64?: string | null,
+  sessionId?: string | null
 ): Promise<void> {
-  const { error } = await supabase.from("audits").insert({
+  const payload: Record<string, unknown> = {
     url,
     overall_grade: audit.overallGrade,
     pillar_scores: audit.pillars,
     user_id: userId ?? null,
     screenshot_base64: screenshotBase64 ?? null,
     visual_annotations: audit.visualAnnotations ?? null,
-  });
+  };
+  if (sessionId) payload.session_id = sessionId;
+
+  const { error } = await supabase.from("audits").insert(payload);
   if (error) throw new Error(error.message);
 }
 
