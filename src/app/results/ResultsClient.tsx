@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import type { AuditResultV2, PillarResultV2, TopFix, VisualAnnotation } from "@/lib/auditor";
 import { cn } from "@/lib/utils";
 import SiteIQLogo from "@/components/SiteIQLogo";
-import { RadarAnimation } from "@/components/ui/radar-animation";
+import { AnimatedBlobs } from "@/components/ui/blobs";
 
 /* ── score helpers ──────────────────────────────────────────── */
 
@@ -632,13 +632,15 @@ function LoadingView({ progress }: { progress: number; statusMsg: string }) {
   }, []);
 
   return (
-    <div className="relative min-h-[calc(100vh-76px)] flex items-center justify-center px-6 overflow-hidden">
-      {/* radar background */}
-      <RadarAnimation />
+    <div className="relative min-h-[calc(100vh-76px)] flex items-center justify-center px-6 overflow-hidden" style={{ background: '#0a0a0f' }}>
+      {/* blob background — clipped to loading container */}
+      <div className="absolute inset-0 overflow-hidden">
+        <AnimatedBlobs />
+      </div>
       {/* content */}
       <div className="relative z-10 flex flex-col items-center gap-10 w-full max-w-xs text-center">
         {/* frosted backdrop only behind the content panel */}
-        <div className="absolute -inset-8 rounded-3xl bg-black/40 backdrop-blur-sm -z-10 pointer-events-none" />
+        <div className="absolute -inset-8 rounded-3xl bg-black/50 backdrop-blur-md -z-10 pointer-events-none" />
         <div className="flex flex-col items-center gap-3">
           <SiteIQLogo size={48} className="drop-shadow-[0_0_20px_rgba(6,182,212,0.6)]" />
           <span className="text-sm font-semibold tracking-tight text-white/90">SiteIQ</span>
