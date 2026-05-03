@@ -145,6 +145,21 @@ a {
 }
 .siteiq-highlight { animation: siteiq-highlight 1.8s ease-out forwards; }
 
+@keyframes siteiq-scanline {
+  from { top: 0%; }
+  to   { top: 100%; }
+}
+
+@keyframes siteiq-box-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(6,182,212,0.55); }
+  50%       { box-shadow: 0 0 0 7px rgba(6,182,212,0); }
+}
+
+@keyframes siteiq-slide-spring {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ─── print ──────────────────────────────────────────────────── */
 @media print {
   @page { margin: 1.5cm; }

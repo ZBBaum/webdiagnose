@@ -321,51 +321,51 @@ function FullscreenModal({
     : null;
 }
 
-/* ── annotation viewer ──────────────────────────────────────── */
+/* ── split annotation panel ─────────────────────────────────── */
 
-function AnnotatedScreenshot({
+function SplitAnnotationPanel({
   screenshot,
   annotations,
   url,
-  onAnnotationClick,
 }: {
   screenshot: string;
   annotations: VisualAnnotation[];
   url: string;
-  onAnnotationClick?: (i: number) => void;
 }) {
-  const [activeIdx, setActiveIdx] = useState<number | null>(null);
-  const [fullscreen, setFullscreen] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const [scanDone, setScanDone] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const findingRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setScanDone(true), 1600);
+    return () => clearTimeout(t);
+  }, []);
+
+  function select(i: number) {
+    const next = selectedIdx === i ? null : i;
+    setSelectedIdx(next);
+    if (next !== null) {
+      setTimeout(() => {
+        findingRefs.current[next]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 50);
+    }
+  }
 
   return (
     <div className="space-y-3">
-      {/* toolbar: legend chips + action buttons */}
+      {/* toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex flex-wrap gap-1.5">
-          {annotations.map((ann, i) => {
-            const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
-            return (
-              <button
-                key={i}
-                type="button"
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                onMouseEnter={() => setActiveIdx(i)}
-                onMouseLeave={() => setActiveIdx(null)}
-                onClick={() => onAnnotationClick?.(i)}
-              >
-                <span
-                  className="flex items-center justify-center rounded-full text-white font-bold shrink-0"
-                  style={{ width: 16, height: 16, fontSize: 10, lineHeight: 1, background: s.badge }}
-                >
-                  {i + 1}
-                </span>
-                {ann.label}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-4">
+          {(["critical", "warning", "good"] as const).map((t) => (
+            <span key={t} className="flex items-center gap-1.5 text-xs text-muted-foreground capitalize">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: ANN_TYPE[t].badge }} />
+              {t}
+            </span>
+          ))}
         </div>
-
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
@@ -394,30 +394,204 @@ function AnnotatedScreenshot({
         </div>
       </div>
 
-      {/* scrollable preview */}
-      <div
-        className="w-full rounded-xl border border-border overflow-auto bg-black/5"
-        style={{ maxHeight: "580px" }}
-      >
-        {/*
-          ALIGNMENT: inner div is `relative block` (not inline-block) so its
-          height equals the rendered image height, making top:y% coords correct.
-        */}
-        <div className="relative block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`data:image/png;base64,${screenshot}`}
-            alt="Page screenshot with annotations"
-            className="block w-full h-auto select-none"
-            draggable={false}
-          />
-          <AnnOverlays
-            annotations={annotations}
-            activeIdx={activeIdx}
-            onEnter={setActiveIdx}
-            onLeave={() => setActiveIdx(null)}
-            onClick={onAnnotationClick}
-          />
+      {/* split panel */}
+      <div className="flex rounded-xl border border-border overflow-hidden" style={{ height: 620 }}>
+
+        {/* ── left: screenshot (60%) ── */}
+        <div className="relative overflow-auto bg-black/10" style={{ flex: "0 0 60%" }}>
+          {/* ALIGNMENT: relative block so top:y% annotation coords are correct */}
+          <div className="relative block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`data:image/png;base64,${screenshot}`}
+              alt="Page screenshot with annotations"
+              className="block w-full h-auto select-none"
+              draggable={false}
+            />
+
+            {/* teal scan line sweeping top→bottom on load */}
+            {!scanDone && (
+              <div
+                className="absolute left-0 right-0 pointer-events-none z-20"
+                style={{
+                  height: 2,
+                  top: 0,
+                  background: "linear-gradient(90deg, transparent 0%, #06b6d4 15%, #06b6d4 85%, transparent 100%)",
+                  boxShadow: "0 0 18px 8px rgba(6,182,212,0.4)",
+                  animation: "siteiq-scanline 1.5s linear forwards",
+                }}
+              />
+            )}
+
+            {/* annotation boxes */}
+            {annotations.map((ann, i) => {
+              const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
+              const isSelected = selectedIdx === i;
+              const isDimmed = selectedIdx !== null && !isSelected;
+              const isHovered = hoverIdx === i;
+              const revealDelay = (ann.y / 100) * 1.5;
+              const tooltipBelow = ann.y < 15;
+
+              return (
+                <div
+                  key={i}
+                  className="absolute cursor-pointer"
+                  style={{
+                    left: `${ann.x}%`,
+                    top: `${ann.y}%`,
+                    width: `${ann.width}%`,
+                    height: `${ann.height}%`,
+                    border: `2px solid ${isSelected ? "#06b6d4" : s.border}`,
+                    borderRadius: 10,
+                    opacity: isDimmed ? 0.3 : 1,
+                    transition: "opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+                    boxShadow: isSelected
+                      ? "0 0 0 3px rgba(6,182,212,0.3), 0 0 24px rgba(6,182,212,0.2)"
+                      : isHovered
+                      ? "0 2px 12px rgba(0,0,0,0.4)"
+                      : "0 1px 4px rgba(0,0,0,0.25)",
+                    zIndex: isSelected ? 30 : isHovered ? 20 : 10,
+                    animation: `siteiq-ann-fadein 0.35s ease-out ${revealDelay}s both`,
+                  }}
+                  onClick={() => select(i)}
+                  onMouseEnter={() => setHoverIdx(i)}
+                  onMouseLeave={() => setHoverIdx(null)}
+                >
+                  {/* number badge */}
+                  <span
+                    className="absolute flex items-center justify-center rounded-full text-white font-bold select-none pointer-events-none"
+                    style={{
+                      width: 22,
+                      height: 22,
+                      fontSize: 12,
+                      lineHeight: 1,
+                      top: 4,
+                      left: 4,
+                      background: isSelected ? "#06b6d4" : s.badge,
+                      boxShadow: "0 1px 5px rgba(0,0,0,0.55)",
+                      transform: isSelected ? "scale(1.2)" : "scale(1)",
+                      transition: "transform 0.15s ease, background 0.15s ease",
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+
+                  {/* teal pulse ring — active only */}
+                  {isSelected && (
+                    <div
+                      className="absolute inset-0 rounded-[10px] pointer-events-none"
+                      style={{
+                        border: "2px solid #06b6d4",
+                        animation: "siteiq-box-pulse 1.8s ease-in-out infinite",
+                      }}
+                    />
+                  )}
+
+                  {/* hover tooltip */}
+                  {isHovered && (
+                    <div
+                      className="absolute z-50 pointer-events-none rounded-lg shadow-2xl"
+                      style={{
+                        background: "#0f172a",
+                        color: "white",
+                        padding: "6px 10px",
+                        maxWidth: 220,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: `1px solid ${s.badge}55`,
+                        ...(tooltipBelow
+                          ? { top: "calc(100% + 6px)" }
+                          : { bottom: "calc(100% + 6px)" }),
+                        left: 0,
+                      }}
+                    >
+                      <span style={{ color: s.badge }}>{i + 1}.</span>{" "}{ann.label}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── divider ── */}
+        <div className="w-px bg-border shrink-0" />
+
+        {/* ── right: findings list (40%) ── */}
+        <div className="flex-1 overflow-y-auto bg-card">
+          {annotations.map((ann, i) => {
+            const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
+            const isExpanded = selectedIdx === i;
+            const isActive = selectedIdx === i || hoverIdx === i;
+
+            return (
+              <div
+                key={i}
+                ref={(el) => { findingRefs.current[i] = el; }}
+                className="border-b border-border cursor-pointer"
+                style={{
+                  background: isActive ? "rgba(6,182,212,0.06)" : "transparent",
+                  transition: "background 0.15s ease",
+                }}
+                onClick={() => select(i)}
+                onMouseEnter={() => setHoverIdx(i)}
+                onMouseLeave={() => setHoverIdx(null)}
+              >
+                {/* collapsed header — always visible */}
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <span
+                    className="shrink-0 flex items-center justify-center rounded-full text-white font-bold text-xs"
+                    style={{
+                      width: 24,
+                      height: 24,
+                      background: isActive ? "#06b6d4" : s.badge,
+                      boxShadow: isActive ? "0 0 10px rgba(6,182,212,0.45)" : "none",
+                      transition: "background 0.15s ease, box-shadow 0.15s ease",
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">
+                    {ann.label}
+                  </span>
+                  <span
+                    className="shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
+                    style={{ background: `${s.badge}22`, color: s.badge }}
+                  >
+                    {ann.type}
+                  </span>
+                  <svg
+                    className="shrink-0 w-3.5 h-3.5 text-muted-foreground"
+                    style={{
+                      transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s ease",
+                    }}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                {/* expanded content — spring slide down */}
+                {isExpanded && (
+                  <div
+                    className="px-4 pb-4"
+                    style={{ animation: "siteiq-slide-spring 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
+                  >
+                    <p className="text-xs text-muted-foreground leading-relaxed" style={{ paddingLeft: 36 }}>
+                      {ann.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -426,7 +600,6 @@ function AnnotatedScreenshot({
           screenshot={screenshot}
           annotations={annotations}
           onClose={() => setFullscreen(false)}
-          onAnnotationClick={onAnnotationClick}
         />
       )}
     </div>
@@ -664,20 +837,6 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
     if (ann.refSection) annMap[ann.refSection] = i;
   });
 
-  const [highlightedAnn, setHighlightedAnn] = useState<number | null>(null);
-  const highlightTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function handleAnnotationClick(i: number) {
-    const ann = sortedAnnotations[i];
-    if (!ann?.refSection) return;
-    const el = document.getElementById(`audit-ann-${i}`);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
-    setHighlightedAnn(i);
-    highlightTimeout.current = setTimeout(() => setHighlightedAnn(null), 2000);
-  }
-
   function getAnn(refKey: string) {
     const idx = annMap[refKey];
     if (idx === undefined) return { annNumber: null, annType: null };
@@ -765,13 +924,12 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
             <SectionHeading
               number="01"
               title="Visual Analysis"
-              subtitle="Annotated screenshot — hover any box to see the finding, click to jump to the written analysis below"
+              subtitle="Click an annotation box or finding to explore — hover a box for a quick label"
             />
-            <AnnotatedScreenshot
+            <SplitAnnotationPanel
               screenshot={screenshot!}
               annotations={sortedAnnotations}
               url={url}
-              onAnnotationClick={handleAnnotationClick}
             />
           </section>
         )}
@@ -802,7 +960,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
                     fix={fix}
                     annNumber={annNumber}
                     annType={annType}
-                    isHighlighted={annNumber != null && highlightedAnn === annNumber - 1}
+                    isHighlighted={false}
                   />
                 );
               })}
@@ -823,7 +981,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
                     pillar={pillar}
                     annNumber={annNumber}
                     annType={annType}
-                    isHighlighted={annNumber != null && highlightedAnn === annNumber - 1}
+                    isHighlighted={false}
                   />
                 );
               })}
