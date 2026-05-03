@@ -24,7 +24,7 @@ export function ShaderAnimation() {
       void main(void) {
         vec2 uv = (gl_FragCoord.xy * 2.0 - resolution.xy) / min(resolution.x, resolution.y);
         float t = time * 0.05;
-        float lineWidth = 0.003;
+        float lineWidth = 0.007;
 
         vec3 color = vec3(0.0);
         for (int j = 0; j < 3; j++) {
@@ -85,7 +85,7 @@ export function ShaderAnimation() {
     let rafId: number
     const animate = () => {
       rafId = requestAnimationFrame(animate)
-      uniforms.time.value += 0.05
+      uniforms.time.value += 0.02
       renderer.render(scene, camera)
     }
     animate()
