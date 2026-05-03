@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { AuditResultV2, PillarResultV2, TopFix, VisualAnnotation } from "@/lib/auditor";
 import { cn } from "@/lib/utils";
 import SiteIQLogo from "@/components/SiteIQLogo";
+import { ShaderAnimation } from "@/components/ui/shader-animation";
 
 /* ── score helpers ──────────────────────────────────────────── */
 
@@ -620,26 +621,38 @@ function LoadingView({ progress, statusMsg }: { progress: number; statusMsg: str
   }, [statusMsg, displayed]);
 
   return (
-    <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6">
-      <div className="flex flex-col items-center gap-10 w-full max-w-xs text-center">
+    <div className="relative min-h-[calc(100vh-76px)] flex items-center justify-center px-6 overflow-hidden">
+      {/* shader background */}
+      <ShaderAnimation />
+      {/* subtle dark vignette so text stays readable */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(9,9,9,0.45) 0%, rgba(9,9,9,0.75) 100%)",
+        }}
+      />
+      {/* content */}
+      <div className="relative z-10 flex flex-col items-center gap-10 w-full max-w-xs text-center">
         <div className="flex flex-col items-center gap-3">
-          <SiteIQLogo size={48} className="shadow-lg" />
-          <span className="text-sm font-semibold tracking-tight">SiteIQ</span>
+          <SiteIQLogo size={48} className="shadow-lg drop-shadow-[0_0_18px_rgba(6,182,212,0.5)]" />
+          <span className="text-sm font-semibold tracking-tight text-white/90">SiteIQ</span>
         </div>
         <div className="w-full space-y-3.5">
-          <h2 className="text-lg font-semibold">Analyzing your site</h2>
-          <div className="w-full h-[3px] rounded-full bg-muted overflow-hidden">
+          <h2 className="text-lg font-semibold text-white">Analyzing your site</h2>
+          <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden">
             <div
               className="h-full rounded-full"
               style={{
                 width: `${progress}%`,
                 background: "linear-gradient(90deg,#2563eb,#06b6d4)",
                 transition: "width 0.4s ease",
+                boxShadow: "0 0 10px rgba(6,182,212,0.6)",
               }}
             />
           </div>
           <p
-            className="text-sm text-muted-foreground transition-opacity duration-200"
+            className="text-sm text-white/60 transition-opacity duration-200"
             style={{ opacity: visible ? 1 : 0 }}
           >
             {displayed}
