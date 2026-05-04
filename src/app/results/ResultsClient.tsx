@@ -1171,7 +1171,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
   const auditDate = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   return (
-    <div className="min-h-screen print:min-h-0" style={{ background: "#0a0a0f" }}>
+    <div className="min-h-screen print:min-h-0" style={{ background: "transparent" }}>
       <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
       <DotBackground pillars={audit.pillars ?? []} grade={grade} />
       <div className="relative" style={{ zIndex: 1 }}>
@@ -1209,7 +1209,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
       </div>
 
       {/* score overview header */}
-      <div className="border-b print:bg-transparent" style={{ borderColor: "rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.01)" }}>
+      <div className="border-b print:bg-transparent" style={{ borderColor: "rgba(255,255,255,0.07)", background: "transparent" }}>
         <div className="max-w-5xl mx-auto px-6 py-12 print:py-6">
           <div className="flex flex-col sm:flex-row items-start gap-10 sm:gap-16">
 
