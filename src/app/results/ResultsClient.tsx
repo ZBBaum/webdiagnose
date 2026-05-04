@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Sparkles } from "lucide-react";
 import type { AuditResultV2, PillarResultV2, TopFix, VisualAnnotation } from "@/lib/auditor";
 import { cn } from "@/lib/utils";
 import SiteIQLogo from "@/components/SiteIQLogo";
 import { AnimatedBlobs } from "@/components/ui/blobs";
+import { CanvasRevealEffect } from "@/components/ui/sign-in-flow-1";
+import { GlowCard } from "@/components/ui/spotlight-card";
 
 /* ── multi-page types ───────────────────────────────────────── */
 
@@ -154,7 +157,7 @@ async function downloadAnnotated(
       const w = (ann.width / 100) * W;
       const h = (ann.height / 100) * H;
 
-      // border only, no fill — rounded corners
+      // border only, no fill, rounded corners
       ctx.strokeStyle = s.badge;
       ctx.lineWidth = Math.max(2, W * 0.0025);
       const r = Math.min(12, w * 0.15, h * 0.3);
@@ -258,7 +261,7 @@ function AnnOverlays({
                 background: s.badge,
                 top: 4,
                 left: 4,
-                boxShadow: "0 1px 5px rgba(0,0,0,0.55)",
+                boxShadow: `0 1px 5px rgba(0,0,0,0.55), 0 0 10px ${s.badge}cc, 0 0 20px ${s.badge}55`,
                 zIndex: 5,
                 transform: isActive ? "scale(1.2)" : "scale(1)",
                 transition: "transform 0.15s ease",
@@ -540,7 +543,7 @@ function SplitAnnotationPanel({
                     {i + 1}
                   </span>
 
-                  {/* teal pulse ring — active only */}
+                  {/* teal pulse ring, active only */}
                   {isSelected && (
                     <div
                       className="absolute inset-0 rounded-[10px] pointer-events-none"
@@ -604,7 +607,7 @@ function SplitAnnotationPanel({
                 onMouseEnter={() => setHoverIdx(i)}
                 onMouseLeave={() => setHoverIdx(null)}
               >
-                {/* collapsed header — always visible */}
+                {/* collapsed header, always visible */}
                 <div className="flex items-center gap-3 px-4 py-3.5">
                   <span
                     className="shrink-0 flex items-center justify-center rounded-full text-white font-bold text-xs"
@@ -642,7 +645,7 @@ function SplitAnnotationPanel({
                   </svg>
                 </div>
 
-                {/* expanded content — spring slide down */}
+                {/* expanded content, spring slide down */}
                 {isExpanded && (
                   <div
                     className="px-4 pb-4"
@@ -700,7 +703,7 @@ function LoadingView({ progress, pageInfo }: { progress: number; statusMsg: stri
       <div className="absolute inset-0 overflow-hidden">
         <AnimatedBlobs />
       </div>
-      {/* content — centered over blobs */}
+      {/* content, centered over blobs */}
       <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-[280px] text-center">
         <div className="flex flex-col items-center gap-2">
           <SiteIQLogo size={40} className="opacity-90" />
@@ -775,7 +778,7 @@ function FiveSecondCard({
 }: { label: string; score: number; quote: string; finding: string }) {
   const s = sc(score);
   return (
-    <div className={cn("rounded-xl border p-5 flex flex-col gap-3 break-inside-avoid", s.bgCls, s.borderCls)}>
+    <GlowCard className="p-5 flex flex-col gap-3 break-inside-avoid">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
         <div className="flex items-baseline gap-0.5">
@@ -794,7 +797,7 @@ function FiveSecondCard({
         </blockquote>
       )}
       <p className="text-xs text-muted-foreground leading-relaxed">{finding}</p>
-    </div>
+    </GlowCard>
   );
 }
 
@@ -815,12 +818,9 @@ function FixCard({
 }) {
   const d = DIFFICULTY[fix.difficulty] ?? DIFFICULTY.medium;
   return (
-    <div
+    <GlowCard
       id={annNumber != null ? `audit-ann-${annNumber - 1}` : undefined}
-      className={cn(
-        "flex gap-4 items-start rounded-xl border border-border bg-card px-5 py-4 break-inside-avoid transition-shadow",
-        isHighlighted && "siteiq-highlight",
-      )}
+      className={cn("flex gap-4 items-start px-5 py-4 break-inside-avoid transition-shadow", isHighlighted && "siteiq-highlight")}
       style={{ scrollMarginTop: "140px" }}
     >
       <div data-print="fix-num" className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold text-white" style={{ background: "linear-gradient(135deg,#2563eb,#06b6d4)" }}>
@@ -836,7 +836,7 @@ function FixCard({
       <span data-difficulty={fix.difficulty} className={cn("shrink-0 self-start mt-0.5 px-2.5 py-1 rounded-full text-[11px] font-semibold", d.cls)}>
         {d.label}
       </span>
-    </div>
+    </GlowCard>
   );
 }
 
@@ -854,13 +854,52 @@ function PillarCard({
   isHighlighted: boolean;
 }) {
   const s = sc(pillar.score);
+  const [fixes, setFixes] = useState<Array<{ advice: string; copy: string }> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  async function handleFix() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pillarName: pillar.name,
+          issueText: pillar.exactIssue || pillar.summary,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.fixes)) {
+        setFixes(data.fixes);
+      }
+    } catch {
+      // silent failure, button returns to default state
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCopy(text: string, idx: number) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 1500);
+  }
+
   return (
-    <div
+    <GlowCard
       id={annNumber != null ? `audit-ann-${annNumber - 1}` : undefined}
-      className={cn(
-        "rounded-xl border border-border bg-card overflow-hidden flex flex-col break-inside-avoid transition-shadow",
-        isHighlighted && "siteiq-highlight",
-      )}
+      className={cn("flex flex-col break-inside-avoid transition-shadow", isHighlighted && "siteiq-highlight")}
       style={{ scrollMarginTop: "140px" }}
     >
       <div className={cn("px-5 py-4 flex items-start justify-between gap-3", s.bgCls)}>
@@ -905,7 +944,7 @@ function PillarCard({
           <p data-print="rewrite-label" className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
             Suggested Rewrite
           </p>
-          <p className="text-xs text-foreground leading-relaxed">{pillar.rewrite || "—"}</p>
+          <p className="text-xs text-foreground leading-relaxed">{pillar.rewrite || ""}</p>
         </div>
       </div>
 
@@ -916,7 +955,61 @@ function PillarCard({
           </p>
         </div>
       )}
-    </div>
+
+      <div className="px-5 py-3 border-t border-border">
+        <button
+          onClick={handleFix}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-teal-500 text-teal-600 dark:text-teal-400 text-sm font-medium hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <>
+              <svg className="animate-spin h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Generating fixes...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 shrink-0" />
+              Fix this for me
+            </>
+          )}
+        </button>
+      </div>
+
+      {fixes && (
+        <div className="px-5 py-4 border-t border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-teal-950/20 space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-teal-600 dark:text-teal-400">Ready to Use</p>
+          <div className="space-y-3">
+            {fixes.map((fix, i) => (
+              <div key={i} className="space-y-1.5">
+                <p className="text-xs text-foreground leading-relaxed">{fix.advice}</p>
+                {fix.copy && (
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 text-xs text-foreground leading-relaxed bg-background rounded-lg px-3 py-2.5 border border-border">
+                      {fix.copy}
+                    </div>
+                    <button
+                      onClick={() => handleCopy(fix.copy, i)}
+                      className={cn(
+                        "shrink-0 mt-0.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium border transition-colors",
+                        copiedIndex === i
+                          ? "border-teal-400 text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30"
+                          : "border-border text-muted-foreground hover:border-teal-400 hover:text-teal-600 dark:hover:text-teal-400",
+                      )}
+                    >
+                      {copiedIndex === i ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </GlowCard>
   );
 }
 
@@ -947,6 +1040,22 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
 
   return (
     <div className="min-h-screen print:min-h-0">
+
+      {/* dot matrix background */}
+      <div className="fixed inset-0 pointer-events-none select-none print:hidden" style={{ zIndex: 0 }}>
+        <CanvasRevealEffect
+          animationSpeed={3}
+          containerClassName="bg-[#090909]"
+          colors={[[37, 99, 235], [6, 182, 212]]}
+          opacities={[0.05, 0.05, 0.07, 0.08, 0.08, 0.1, 0.13, 0.13, 0.15, 0.18]}
+          dotSize={3}
+          showGradient={false}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_40%,transparent_20%,#090909_85%)]" />
+      </div>
+
+      {/* content sits above the fixed background */}
+      <div className="relative" style={{ zIndex: 1 }}>
 
       {/* print header */}
       <div className="hidden print:flex items-center justify-between px-8 py-4 border-b border-gray-200 mb-4">
@@ -1017,13 +1126,13 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
       {/* body */}
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-14 print:space-y-10 print:py-6">
 
-        {/* 01 — visual analysis */}
+        {/* 01 visual analysis */}
         {hasAnnotations && (
           <section className="print:hidden">
             <SectionHeading
               number="01"
               title="Visual Analysis"
-              subtitle="Click an annotation box or finding to explore — hover a box for a quick label"
+              subtitle="Click an annotation or finding to explore. Hover a box for a quick label."
             />
             <SplitAnnotationPanel
               screenshot={screenshot!}
@@ -1048,7 +1157,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
         {/* top fixes */}
         {(audit.topFixes?.length ?? 0) > 0 && (
           <section>
-            <SectionHeading number={hasAnnotations ? "03" : "02"} title="Top 3 Revenue Opportunities" subtitle="Ranked by estimated conversion impact — fix these first" />
+            <SectionHeading number={hasAnnotations ? "03" : "02"} title="Top 3 Revenue Opportunities" subtitle="Ranked by estimated conversion impact. Fix these first." />
             <div className="space-y-3">
               {audit.topFixes.map((fix, i) => {
                 const { annNumber, annType } = getAnn(`fix${i + 1}`);
@@ -1070,7 +1179,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
         {/* pillar analysis */}
         {(audit.pillars?.length ?? 0) > 0 && (
           <section>
-            <SectionHeading number={hasAnnotations ? "04" : "03"} title="Pillar Analysis" subtitle="Six dimensions of conversion performance — exact issue and rewrite for each" />
+            <SectionHeading number={hasAnnotations ? "04" : "03"} title="Pillar Analysis" subtitle="Six dimensions of conversion performance, with exact issue and rewrite for each." />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {audit.pillars.map((pillar) => {
                 const { annNumber, annType } = getAnn(pillar.name);
@@ -1096,6 +1205,8 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
           Generated by SiteIQ · siteiqai.com · {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
         </p>
       </div>
+
+      </div>{/* end content wrapper */}
     </div>
   );
 }
@@ -1147,7 +1258,7 @@ function SiteOverview({ pages }: { pages: PageResult[] }) {
           <span className="shrink-0 w-6 h-6 rounded-full border-[2px] flex items-center justify-center text-[11px] font-extrabold" style={{ borderColor: siteColor, color: siteColor }}>
             {siteGrade}
           </span>
-          <span className="text-sm text-muted-foreground">Site Overview — {pages.length} pages audited</span>
+          <span className="text-sm text-muted-foreground">Site Overview · {pages.length} pages audited</span>
           <div className="flex-1" />
           <a href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">New audit</a>
         </div>
@@ -1172,7 +1283,7 @@ function SiteOverview({ pages }: { pages: PageResult[] }) {
                siteGrade === "B" ? "Strong performance, a few gaps" :
                siteGrade === "C" ? "Room for improvement" :
                siteGrade === "D" ? "Significant issues found" :
-               "Critical issues — act now"}
+               "Critical issues. Act now."}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               Average across {pages.length} audited page{pages.length !== 1 ? "s" : ""}
@@ -1209,7 +1320,7 @@ function SiteOverview({ pages }: { pages: PageResult[] }) {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-xs text-muted-foreground max-w-xs">
-                        {topFix ? topFix.fix : "—"}
+                        {topFix ? topFix.fix : ""}
                       </td>
                     </tr>
                   );
@@ -1356,7 +1467,7 @@ export default function ResultsClient({ url, urls }: { url: string; urls?: strin
       try {
         res = await fetch(fetchUrl);
       } catch {
-        if (!cancelled) { setErrorMsg("Network error — could not reach the server."); setPhase("error"); }
+        if (!cancelled) { setErrorMsg("Network error. Could not reach the server."); setPhase("error"); }
         return;
       }
 
