@@ -1111,10 +1111,10 @@ function DotBackground({ pillars, grade }: { pillars: PillarResultV2[]; grade: s
   return (
     <div className="fixed inset-0 pointer-events-none select-none print:hidden" style={{ zIndex: 0 }}>
       <CanvasRevealEffect
-        animationSpeed={2.5}
-        containerClassName="bg-[#0a0a0f]"
+        animationSpeed={3}
+        containerClassName="bg-[#090909]"
         colors={colors}
-        opacities={[0.03, 0.04, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.13]}
+        opacities={[0.05, 0.05, 0.07, 0.08, 0.08, 0.1, 0.13, 0.13, 0.15, 0.18]}
         dotSize={3}
         showGradient={false}
       />
@@ -1122,25 +1122,23 @@ function DotBackground({ pillars, grade }: { pillars: PillarResultV2[]; grade: s
       {goodPct > 0 && (
         <div className="absolute" style={{
           top: "-5%", right: "-5%", width: "55%", height: "55%",
-          background: `radial-gradient(ellipse at center, rgba(110,231,183,${(goodPct * 0.09).toFixed(3)}) 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse at center, rgba(110,231,183,${(goodPct * 0.12).toFixed(3)}) 0%, transparent 70%)`,
         }} />
       )}
       {warnPct > 0 && (
         <div className="absolute" style={{
           top: "25%", left: "-5%", width: "50%", height: "55%",
-          background: `radial-gradient(ellipse at center, rgba(215,119,6,${(warnPct * 0.09).toFixed(3)}) 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse at center, rgba(215,119,6,${(warnPct * 0.12).toFixed(3)}) 0%, transparent 70%)`,
         }} />
       )}
       {critPct > 0 && (
         <div className="absolute" style={{
           bottom: "5%", right: "5%", width: "50%", height: "45%",
-          background: `radial-gradient(ellipse at center, rgba(248,113,113,${(critPct * 0.09).toFixed(3)}) 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse at center, rgba(248,113,113,${(critPct * 0.12).toFixed(3)}) 0%, transparent 70%)`,
         }} />
       )}
       {/* vignette — keeps text and cards readable */}
-      <div className="absolute inset-0" style={{
-        background: "radial-gradient(ellipse 80% 65% at 50% 40%, transparent 10%, #0a0a0f 80%)",
-      }} />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_40%,transparent_20%,#090909_85%)]" />
     </div>
   );
 }
@@ -1171,7 +1169,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
   const auditDate = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   return (
-    <div className="min-h-screen print:min-h-0" style={{ background: "transparent" }}>
+    <div className="min-h-screen print:min-h-0" style={{ background: "#090909" }}>
       <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
       <DotBackground pillars={audit.pillars ?? []} grade={grade} />
       <div className="relative" style={{ zIndex: 1 }}>
