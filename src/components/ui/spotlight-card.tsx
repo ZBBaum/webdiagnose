@@ -26,33 +26,28 @@ const GlowCard: React.FC<GlowCardProps> = ({ children, className = '', id, style
     return () => document.removeEventListener('pointermove', syncPointer);
   }, []);
 
-  // Fixed SiteIQ blue hue (220 ≈ #2563eb), spread=0 so it never drifts to purple
   const inlineStyles = {
     '--base': 220,
     '--spread': 0,
-    '--radius': '16',
-    '--border': '1.5',
-    '--backup-border': 'rgba(37, 99, 235, 0.35)',
-    '--size': '300',
-    '--outer': '1',
-    '--border-size': 'calc(var(--border, 2) * 1px)',
+    '--border': '1',
+    '--backup-border': 'rgba(255,255,255,0.07)',
+    '--size': '320',
+    '--border-size': 'calc(var(--border, 1) * 1px)',
     '--spotlight-size': 'calc(var(--size, 150) * 1px)',
-    '--hue': 'calc(var(--base) + (var(--xp, 0) * var(--spread, 0)))',
-    // Spotlight fill layer + dark card gradient layered together
+    '--hue': '220',
     backgroundImage: `
       radial-gradient(
         var(--spotlight-size) var(--spotlight-size) at
         calc(var(--x, 0) * 1px)
         calc(var(--y, 0) * 1px),
-        hsl(220 90% 60% / 0.07), transparent
+        hsl(220 60% 55% / 0.05), transparent
       ),
-      linear-gradient(160deg, #111111 0%, #1c1c1c 100%)
+      linear-gradient(160deg, #111118 0%, #1a1a24 100%)
     `,
     backgroundSize: 'calc(100% + (2 * var(--border-size))) calc(100% + (2 * var(--border-size)))',
     backgroundPosition: '50% 50%',
     backgroundAttachment: 'fixed',
     border: 'var(--border-size) solid var(--backup-border)',
-    boxShadow: '0 0 18px rgba(37, 99, 235, 0.18), 0 0 4px rgba(37, 99, 235, 0.12)',
     borderRadius: '16px',
     position: 'relative' as const,
     touchAction: 'none' as const,
@@ -60,6 +55,14 @@ const GlowCard: React.FC<GlowCardProps> = ({ children, className = '', id, style
   };
 
   const css = `
+    .siteiq-glow-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .siteiq-glow-card:hover {
+      transform: scale(1.015);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 32px rgba(0,0,0,0.6);
+      border-color: rgba(255,255,255,0.13) !important;
+    }
     .siteiq-glow-card::before,
     .siteiq-glow-card::after {
       pointer-events: none;
@@ -81,16 +84,16 @@ const GlowCard: React.FC<GlowCardProps> = ({ children, className = '', id, style
         calc(var(--spotlight-size) * 0.75) calc(var(--spotlight-size) * 0.75) at
         calc(var(--x, 0) * 1px)
         calc(var(--y, 0) * 1px),
-        hsl(220 90% 65% / 1), transparent 100%
+        hsl(220 70% 65% / 0.8), transparent 100%
       );
-      filter: brightness(2);
+      filter: brightness(1.6);
     }
     .siteiq-glow-card::after {
       background-image: radial-gradient(
         calc(var(--spotlight-size) * 0.5) calc(var(--spotlight-size) * 0.5) at
         calc(var(--x, 0) * 1px)
         calc(var(--y, 0) * 1px),
-        hsl(0 100% 100% / 0.12), transparent 100%
+        hsl(0 100% 100% / 0.08), transparent 100%
       );
     }
   `;

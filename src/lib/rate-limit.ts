@@ -11,6 +11,7 @@ const ADMIN_EMAILS = new Set([
   "jeff.baum@fairfieldmgmt.com",
   "dr.gulsungul@gmail.com",
   "sadiemarigold2009@gmail.com",
+  "jeffb9@gmail.com",
 ]);
 
 function adminClient() {
@@ -53,7 +54,7 @@ export async function checkRateLimit(
     .single();
 
   if (error && error.code !== "PGRST116") {
-    // PGRST116 = row not found — that's expected for first-time users
+    // PGRST116 = row not found, expected for first-time users
     console.error("[rate-limit] select:", error.message);
     return { allowed: true }; // fail open so we never block legitimate users on DB errors
   }
@@ -61,7 +62,7 @@ export async function checkRateLimit(
   const now = new Date();
 
   if (!data || new Date(data.reset_at) <= now) {
-    // First audit today or window has expired — reset to 1
+    // First audit today or window has expired, reset to 1
     const { error: upsertErr } = await supabase
       .from("rate_limits")
       .upsert({ identifier: id, count: 1, reset_at: nextMidnightUTC() });
