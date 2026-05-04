@@ -39,6 +39,7 @@ export const CanvasRevealEffect = ({
   colors = [[0, 255, 255]],
   containerClassName,
   dotSize,
+  totalSize,
   showGradient = true,
   reverse = false,
 }: {
@@ -47,6 +48,7 @@ export const CanvasRevealEffect = ({
   colors?: number[][];
   containerClassName?: string;
   dotSize?: number;
+  totalSize?: number;
   showGradient?: boolean;
   reverse?: boolean;
 }) => {
@@ -56,6 +58,7 @@ export const CanvasRevealEffect = ({
         <DotMatrix
           colors={colors ?? [[0, 255, 255]]}
           dotSize={dotSize ?? 3}
+          totalSize={totalSize}
           opacities={
             opacities ?? [0.3, 0.3, 0.3, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 1]
           }
@@ -336,7 +339,7 @@ const Shader: React.FC<ShaderProps> = ({ source, uniforms, maxFps = 60 }) => {
 function PageTopbar({ variant = "signin" }: { variant?: "signin" | "signup" }) {
   return (
     <div className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-5">
-      {/* Logo — links home */}
+      {/* Logo, links home */}
       <a href="/" className="relative flex items-center shrink-0 group">
         <div className="absolute inset-0 rounded-xl bg-blue-500/25 blur-lg pointer-events-none transition-opacity duration-300 group-hover:opacity-150" />
         <SiteIQLogo size={36} className="relative z-10" />
