@@ -7,7 +7,6 @@ import type { AuditResultV2, PillarResultV2, TopFix, VisualAnnotation } from "@/
 import { cn } from "@/lib/utils";
 import SiteIQLogo from "@/components/SiteIQLogo";
 import { AnimatedBlobs } from "@/components/ui/blobs";
-import { CanvasRevealEffect } from "@/components/ui/sign-in-flow-1";
 
 /* ── multi-page types ───────────────────────────────────────── */
 
@@ -1114,24 +1113,9 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
   const auditDate = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   return (
-    <div className="relative min-h-screen print:min-h-0" style={{ background: "#090909" }}>
+    <div className="relative min-h-screen print:min-h-0" style={{ background: "#0d0d12" }}>
       <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
 
-      {/* animated dot matrix background — same setup as sign-in page */}
-      <div className="absolute inset-0 z-0 pointer-events-none select-none print:hidden" style={{ height: "100%" }}>
-        <div className="relative w-full h-full">
-          <CanvasRevealEffect
-            animationSpeed={3}
-            containerClassName="bg-black"
-            colors={[[37, 99, 235], [6, 182, 212]]}
-            dotSize={6}
-            reverse={false}
-            showGradient={false}
-          />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,0,0,0.85)_0%,_transparent_100%)]" />
-          <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-black to-transparent" />
-        </div>
-      </div>
 
       <div className="relative z-10">
 
