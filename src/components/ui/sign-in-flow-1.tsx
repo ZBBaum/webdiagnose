@@ -39,7 +39,6 @@ export const CanvasRevealEffect = ({
   colors = [[0, 255, 255]],
   containerClassName,
   dotSize,
-  totalSize,
   showGradient = true,
   reverse = false,
 }: {
@@ -48,7 +47,6 @@ export const CanvasRevealEffect = ({
   colors?: number[][];
   containerClassName?: string;
   dotSize?: number;
-  totalSize?: number;
   showGradient?: boolean;
   reverse?: boolean;
 }) => {
@@ -58,7 +56,6 @@ export const CanvasRevealEffect = ({
         <DotMatrix
           colors={colors ?? [[0, 255, 255]]}
           dotSize={dotSize ?? 3}
-          totalSize={totalSize}
           opacities={
             opacities ?? [0.3, 0.3, 0.3, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 1]
           }
