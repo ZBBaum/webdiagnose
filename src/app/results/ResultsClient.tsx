@@ -7,90 +7,113 @@ import type { AuditResultV2, PillarResultV2, TopFix, VisualAnnotation } from "@/
 import { cn } from "@/lib/utils";
 import SiteIQLogo from "@/components/SiteIQLogo";
 import { AnimatedBlobs } from "@/components/ui/blobs";
-import { CanvasRevealEffect } from "@/components/ui/sign-in-flow-1";
-import { GlowCard } from "@/components/ui/spotlight-card";
 
 /* ── multi-page types ───────────────────────────────────────── */
 
 type PageResult = { url: string; audit: AuditResultV2; screenshot: string | null };
 
+/* ── global CSS ─────────────────────────────────────────────── */
+
+const GLOBAL_CSS = `
+  @keyframes siteiq-scanline {
+    from { top: 0; }
+    to { top: 100%; }
+  }
+  @keyframes siteiq-ann-fadein {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes siteiq-box-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes siteiq-slide-spring {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .premium-card {
+    background: linear-gradient(160deg, #111118 0%, #1a1a24 100%);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    overflow: hidden;
+  }
+  .premium-card:hover {
+    transform: scale(1.015);
+    border-color: rgba(255,255,255,0.13);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .premium-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    z-index: 0;
+  }
+  .premium-card > * { position: relative; z-index: 1; }
+  .siteiq-highlight {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 4px 20px rgba(0,0,0,0.5) !important;
+  }
+  @media print {
+    .premium-card {
+      background: #fff !important;
+      border: 1px solid #e5e7eb !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+    .premium-card::before { display: none; }
+  }
+`;
+
 /* ── score helpers ──────────────────────────────────────────── */
 
-function getScoreColor(score: number): string {
-  if (score >= 9) return "#06b6d4";
-  if (score >= 7) return "#10b981";
-  if (score >= 5) return "#f59e0b";
-  if (score >= 3) return "#f97316";
-  return "#dc2626";
-}
-
-function getScoreLabel(score: number): string {
-  if (score >= 9) return "Best in class";
-  if (score >= 7) return "Strong";
-  if (score >= 5) return "Needs work";
-  if (score >= 3) return "Weak";
-  return "Priority fix";
-}
-
 function sc(score: number) {
-  if (score >= 9) return {
-    tier: "best" as const, hex: "#06b6d4",
-    cls: "text-cyan-400",
-    bgCls: "bg-cyan-950/30",
-    borderCls: "border-cyan-800/60",
-    label: getScoreLabel(score),
-  };
-  if (score >= 7) return {
-    tier: "strong" as const, hex: "#10b981",
-    cls: "text-emerald-400",
-    bgCls: "bg-emerald-950/30",
-    borderCls: "border-emerald-800/60",
-    label: getScoreLabel(score),
-  };
-  if (score >= 5) return {
-    tier: "needs" as const, hex: "#f59e0b",
-    cls: "text-amber-400",
-    bgCls: "bg-amber-950/30",
-    borderCls: "border-amber-800/60",
-    label: getScoreLabel(score),
-  };
-  if (score >= 3) return {
-    tier: "weak" as const, hex: "#f97316",
-    cls: "text-orange-400",
-    bgCls: "bg-orange-950/30",
-    borderCls: "border-orange-800/60",
-    label: getScoreLabel(score),
-  };
-  return {
-    tier: "critical" as const, hex: "#dc2626",
-    cls: "text-red-500",
-    bgCls: "bg-red-950/30",
-    borderCls: "border-red-800/60",
-    label: getScoreLabel(score),
-  };
+  if (score >= 8) return { tier: "good" as const,     hex: "#6ee7b7", textCls: "text-[#6ee7b7]", label: "Good" };
+  if (score >= 5) return { tier: "warning" as const,  hex: "#d97706", textCls: "text-[#d97706]", label: "Needs work" };
+  return {           tier: "critical" as const,        hex: "#f87171", textCls: "text-[#f87171]", label: "Critical" };
 }
 
-const GRADE_RING: Record<string, string> = {
-  A: "#06b6d4",
-  B: "#10b981",
-  C: "#f59e0b",
-  D: "#f97316",
-  F: "#dc2626",
-};
+function gradeColor(grade: string): string {
+  if (grade === "A" || grade === "B") return "#6ee7b7";
+  if (grade === "C") return "#d97706";
+  return "#f87171";
+}
 
-const DIFFICULTY: Record<string, { label: string; cls: string }> = {
-  easy:   { label: "Easy",   cls: "bg-cyan-950/50 text-cyan-300 border border-cyan-800/60" },
-  medium: { label: "Medium", cls: "bg-amber-950/50 text-amber-300 border border-amber-800/60" },
-  hard:   { label: "Hard",   cls: "bg-red-950/50 text-red-400 border border-red-800/60" },
+function getScoreColor(score: number): string { return sc(score).hex; }
+
+/* ── difficulty ─────────────────────────────────────────────── */
+
+const DIFFICULTY: Record<string, { label: string; dot: string }> = {
+  easy:   { label: "Easy",   dot: "#6ee7b7" },
+  medium: { label: "Medium", dot: "#d97706" },
+  hard:   { label: "Hard",   dot: "#f87171" },
 };
 
 /* ── annotation type colors ─────────────────────────────────── */
 
 const ANN_TYPE: Record<VisualAnnotation["type"], { border: string; badge: string; dot: string }> = {
-  critical: { border: "#dc2626", badge: "#dc2626", dot: "bg-red-500" },
-  warning:  { border: "#f59e0b", badge: "#f59e0b", dot: "bg-amber-400" },
-  good:     { border: "#06b6d4", badge: "#06b6d4", dot: "bg-cyan-500" },
+  critical: { border: "#f87171", badge: "#f87171", dot: "bg-[#f87171]" },
+  warning:  { border: "#d97706", badge: "#d97706", dot: "bg-[#d97706]" },
+  good:     { border: "#6ee7b7", badge: "#6ee7b7", dot: "bg-[#6ee7b7]" },
 };
+
+/* ── premium card wrapper ────────────────────────────────────── */
+
+function PremiumCard({ children, className = "", id, style }: {
+  children: React.ReactNode; className?: string; id?: string; style?: React.CSSProperties;
+}) {
+  return (
+    <div id={id} className={`premium-card ${className}`} style={style}>
+      {children}
+    </div>
+  );
+}
 
 /* ── annotation overlap resolution ─────────────────────────── */
 
@@ -124,7 +147,7 @@ function AnnBadge({ number, type }: { number: number; type: VisualAnnotation["ty
   return (
     <span
       className="inline-flex items-center justify-center rounded-full text-white font-bold shrink-0"
-      style={{ width: 17, height: 17, fontSize: 10, lineHeight: 1, background: s.badge }}
+      style={{ width: 16, height: 16, fontSize: 9, lineHeight: 1, background: s.badge, opacity: 0.9 }}
       title={`See annotation ${number} in the visual analysis above`}
     >
       {number}
@@ -331,29 +354,28 @@ function FullscreenModal({
     : undefined;
 
   const modal = (
-    <div className="fixed inset-0 z-[200] bg-gray-950 flex flex-col" role="dialog" aria-modal="true">
-      {/* header */}
-      <div className="shrink-0 h-12 flex items-center justify-between gap-4 px-4 border-b border-white/10">
+    <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: "#0a0a0f" }} role="dialog" aria-modal="true">
+      <div className="shrink-0 h-12 flex items-center justify-between gap-4 px-4 border-b border-white/[0.07]">
         <div className="flex items-center gap-3 min-w-0">
           <SiteIQLogo size={20} />
-          <span className="text-sm font-semibold text-white">Visual Analysis</span>
-          <span className="text-white/30 hidden sm:block">·</span>
-          <span className="text-xs text-white/50 truncate hidden sm:block">
+          <span className="text-sm font-medium text-white/80">Visual Analysis</span>
+          <span className="text-white/20 hidden sm:block">·</span>
+          <span className="text-xs text-white/40 truncate hidden sm:block">
             Scroll to explore · Click an annotation to jump to the finding
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="hidden md:flex items-center gap-2.5">
+          <div className="hidden md:flex items-center gap-3">
             {(["critical", "warning", "good"] as const).map((t) => (
-              <span key={t} className="flex items-center gap-1 text-[11px] text-white/60 capitalize">
-                <span className="w-2 h-2 rounded-full" style={{ background: ANN_TYPE[t].badge }} />
+              <span key={t} className="flex items-center gap-1.5 text-[11px] text-white/40 capitalize">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: ANN_TYPE[t].badge }} />
                 {t}
               </span>
             ))}
           </div>
           <button
             onClick={onClose}
-            className="ml-2 w-8 h-8 rounded-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors text-lg font-light"
+            className="ml-2 w-8 h-8 rounded-md flex items-center justify-center text-white/50 hover:text-white hover:bg-white/[0.07] transition-colors text-lg font-light"
             aria-label="Close"
           >
             ×
@@ -361,7 +383,6 @@ function FullscreenModal({
         </div>
       </div>
 
-      {/* scrollable image */}
       <div className="flex-1 overflow-auto">
         <div className="relative block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -427,8 +448,8 @@ function SplitAnnotationPanel({
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-4">
           {(["critical", "warning", "good"] as const).map((t) => (
-            <span key={t} className="flex items-center gap-1.5 text-xs text-muted-foreground capitalize">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: ANN_TYPE[t].badge }} />
+            <span key={t} className="flex items-center gap-1.5 text-[11px] text-white/40 capitalize">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: ANN_TYPE[t].badge }} />
               {t}
             </span>
           ))}
@@ -437,7 +458,8 @@ function SplitAnnotationPanel({
           <button
             type="button"
             onClick={() => setFullscreen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-white/[0.07] text-xs font-medium text-white/50 hover:text-white/80 hover:border-white/[0.13] transition-colors"
+            style={{ background: "#111118" }}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -451,7 +473,8 @@ function SplitAnnotationPanel({
               setDownloading(true);
               downloadAnnotated(screenshot, annotations, url, () => setDownloading(false));
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-white/[0.07] text-xs font-medium text-white/50 hover:text-white/80 hover:border-white/[0.13] transition-colors disabled:opacity-40"
+            style={{ background: "#111118" }}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -462,11 +485,10 @@ function SplitAnnotationPanel({
       </div>
 
       {/* split panel */}
-      <div className="flex rounded-xl border border-border overflow-hidden" style={{ height: 620 }}>
+      <div className="flex rounded-xl overflow-hidden border border-white/[0.07]" style={{ height: 620 }}>
 
         {/* ── left: screenshot (60%) ── */}
-        <div className="relative overflow-auto bg-black/10" style={{ flex: "0 0 60%" }}>
-          {/* ALIGNMENT: relative block so top:y% annotation coords are correct */}
+        <div className="relative overflow-auto" style={{ flex: "0 0 60%", background: "#0a0a0f" }}>
           <div className="relative block">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -476,15 +498,15 @@ function SplitAnnotationPanel({
               draggable={false}
             />
 
-            {/* teal scan line sweeping top→bottom on load */}
+            {/* scan line on load */}
             {!scanDone && (
               <div
                 className="absolute left-0 right-0 pointer-events-none z-20"
                 style={{
                   height: 2,
                   top: 0,
-                  background: "linear-gradient(90deg, transparent 0%, #06b6d4 15%, #06b6d4 85%, transparent 100%)",
-                  boxShadow: "0 0 18px 8px rgba(6,182,212,0.4)",
+                  background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 15%, rgba(255,255,255,0.4) 85%, transparent 100%)",
+                  boxShadow: "0 0 18px 8px rgba(255,255,255,0.1)",
                   animation: "siteiq-scanline 1.5s linear forwards",
                 }}
               />
@@ -508,12 +530,12 @@ function SplitAnnotationPanel({
                     top: `${ann.y}%`,
                     width: `${ann.width}%`,
                     height: `${ann.height}%`,
-                    border: `2px solid ${isSelected ? "#06b6d4" : s.border}`,
+                    border: `2px solid ${s.border}`,
                     borderRadius: 10,
-                    opacity: isDimmed ? 0.3 : 1,
+                    opacity: isDimmed ? 0.25 : 1,
                     transition: "opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
                     boxShadow: isSelected
-                      ? "0 0 0 3px rgba(6,182,212,0.3), 0 0 24px rgba(6,182,212,0.2)"
+                      ? `0 0 0 2px ${s.badge}40, 0 0 20px ${s.badge}20`
                       : isHovered
                       ? "0 2px 12px rgba(0,0,0,0.4)"
                       : "0 1px 4px rgba(0,0,0,0.25)",
@@ -524,7 +546,6 @@ function SplitAnnotationPanel({
                   onMouseEnter={() => setHoverIdx(i)}
                   onMouseLeave={() => setHoverIdx(null)}
                 >
-                  {/* number badge */}
                   <span
                     className="absolute flex items-center justify-center rounded-full text-white font-bold select-none pointer-events-none"
                     style={{
@@ -534,7 +555,7 @@ function SplitAnnotationPanel({
                       lineHeight: 1,
                       top: 4,
                       left: 4,
-                      background: isSelected ? "#06b6d4" : s.badge,
+                      background: s.badge,
                       boxShadow: "0 1px 5px rgba(0,0,0,0.55)",
                       transform: isSelected ? "scale(1.2)" : "scale(1)",
                       transition: "transform 0.15s ease, background 0.15s ease",
@@ -548,7 +569,7 @@ function SplitAnnotationPanel({
                     <div
                       className="absolute inset-0 rounded-[10px] pointer-events-none"
                       style={{
-                        border: "2px solid #06b6d4",
+                        border: `2px solid ${s.badge}`,
                         animation: "siteiq-box-pulse 1.8s ease-in-out infinite",
                       }}
                     />
@@ -559,7 +580,7 @@ function SplitAnnotationPanel({
                     <div
                       className="absolute z-50 pointer-events-none rounded-lg shadow-2xl"
                       style={{
-                        background: "#0f172a",
+                        background: "#111118",
                         color: "white",
                         padding: "6px 10px",
                         maxWidth: 220,
@@ -568,7 +589,7 @@ function SplitAnnotationPanel({
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        border: `1px solid ${s.badge}55`,
+                        border: `1px solid ${s.badge}33`,
                         ...(tooltipBelow
                           ? { top: "calc(100% + 6px)" }
                           : { bottom: "calc(100% + 6px)" }),
@@ -584,11 +605,11 @@ function SplitAnnotationPanel({
           </div>
         </div>
 
-        {/* ── divider ── */}
-        <div className="w-px bg-border shrink-0" />
+        {/* divider */}
+        <div className="w-px shrink-0" style={{ background: "rgba(255,255,255,0.07)" }} />
 
         {/* ── right: findings list (40%) ── */}
-        <div className="flex-1 overflow-y-auto bg-card">
+        <div className="flex-1 overflow-y-auto" style={{ background: "#111118" }}>
           {annotations.map((ann, i) => {
             const s = ANN_TYPE[ann.type] ?? ANN_TYPE.warning;
             const isExpanded = selectedIdx === i;
@@ -598,9 +619,10 @@ function SplitAnnotationPanel({
               <div
                 key={i}
                 ref={(el) => { findingRefs.current[i] = el; }}
-                className="border-b border-border cursor-pointer"
+                className="border-b cursor-pointer"
                 style={{
-                  background: isActive ? "rgba(6,182,212,0.06)" : "transparent",
+                  borderColor: "rgba(255,255,255,0.07)",
+                  background: isActive ? "rgba(255,255,255,0.03)" : "transparent",
                   transition: "background 0.15s ease",
                 }}
                 onClick={() => select(i)}
@@ -612,26 +634,24 @@ function SplitAnnotationPanel({
                   <span
                     className="shrink-0 flex items-center justify-center rounded-full text-white font-bold text-xs"
                     style={{
-                      width: 24,
-                      height: 24,
-                      background: isActive ? "#06b6d4" : s.badge,
-                      boxShadow: isActive ? "0 0 10px rgba(6,182,212,0.45)" : "none",
-                      transition: "background 0.15s ease, box-shadow 0.15s ease",
+                      width: 22,
+                      height: 22,
+                      background: s.badge,
+                      opacity: isActive ? 1 : 0.7,
+                      transition: "opacity 0.15s ease",
                     }}
                   >
                     {i + 1}
                   </span>
-                  <span className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">
+                  <span className="flex-1 min-w-0 text-sm font-medium text-white/80 truncate">
                     {ann.label}
                   </span>
-                  <span
-                    className="shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
-                    style={{ background: `${s.badge}22`, color: s.badge }}
-                  >
+                  <span className="shrink-0 flex items-center gap-1.5 text-[10px] text-white/40 uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.badge }} />
                     {ann.type}
                   </span>
                   <svg
-                    className="shrink-0 w-3.5 h-3.5 text-muted-foreground"
+                    className="shrink-0 w-3.5 h-3.5 text-white/30"
                     style={{
                       transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
                       transition: "transform 0.2s ease",
@@ -651,7 +671,7 @@ function SplitAnnotationPanel({
                     className="px-4 pb-4"
                     style={{ animation: "siteiq-slide-spring 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
                   >
-                    <p className="text-xs text-muted-foreground leading-relaxed" style={{ paddingLeft: 36 }}>
+                    <p className="text-xs text-white/50 leading-relaxed" style={{ paddingLeft: 34 }}>
                       {ann.description}
                     </p>
                   </div>
@@ -699,21 +719,18 @@ function LoadingView({ progress, pageInfo }: { progress: number; statusMsg: stri
 
   return (
     <div className="relative min-h-[calc(100vh-76px)] flex items-center justify-center overflow-hidden" style={{ background: '#0a0a0f' }}>
-      {/* blob background */}
       <div className="absolute inset-0 overflow-hidden">
         <AnimatedBlobs />
       </div>
-      {/* content, centered over blobs */}
       <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-[280px] text-center">
         <div className="flex flex-col items-center gap-2">
           <SiteIQLogo size={40} className="opacity-90" />
-          <span className="text-sm font-semibold tracking-wide text-white/70">SiteIQ</span>
+          <span className="text-sm font-medium tracking-wide text-white/50">SiteIQ</span>
         </div>
         <div className="w-full space-y-3">
-          <h2 className="text-base font-semibold text-white/90">
+          <h2 className="text-base font-semibold text-white/80">
             {pageInfo ? `Auditing page ${pageInfo.current} of ${pageInfo.total}` : "Analyzing your site"}
           </h2>
-          {/* multi-page step indicators */}
           {pageInfo && pageInfo.total > 1 && (
             <div className="flex items-center justify-center gap-1.5">
               {Array.from({ length: pageInfo.total }).map((_, i) => (
@@ -723,24 +740,24 @@ function LoadingView({ progress, pageInfo }: { progress: number; statusMsg: stri
                   style={{
                     width: i < pageInfo.current ? 20 : 6,
                     height: 6,
-                    background: i < pageInfo.current ? "#06b6d4" : "rgba(255,255,255,0.15)",
+                    background: i < pageInfo.current ? "#6ee7b7" : "rgba(255,255,255,0.12)",
                   }}
                 />
               ))}
             </div>
           )}
-          <div className="w-full h-[2px] rounded-full bg-white/10 overflow-hidden">
+          <div className="w-full h-[2px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
             <div
               className="h-full rounded-full"
               style={{
                 width: `${progress}%`,
-                background: "linear-gradient(90deg,#2563eb,#06b6d4)",
+                background: "linear-gradient(90deg,#2563eb,#6ee7b7)",
                 transition: "width 0.4s ease",
               }}
             />
           </div>
           <p
-            className="text-xs text-white/40 transition-opacity duration-200"
+            className="text-xs text-white/30 transition-opacity duration-200"
             style={{ opacity: msgVisible ? 1 : 0 }}
           >
             {RADAR_MESSAGES[msgIdx]}
@@ -755,17 +772,36 @@ function LoadingView({ progress, pageInfo }: { progress: number; statusMsg: stri
 
 function SectionHeading({ number, title, subtitle }: { number: string; title: string; subtitle?: string }) {
   return (
-    <div className="flex items-start gap-4 mb-6">
+    <div className="flex items-start gap-4 mb-8">
       <div
         data-print="section-num"
-        className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white mt-0.5"
-        style={{ background: "linear-gradient(135deg,#2563eb,#06b6d4)" }}
+        className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-mono font-semibold mt-0.5"
+        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.3)" }}
       >
         {number}
       </div>
       <div>
-        <h2 className="text-lg font-bold text-foreground">{title}</h2>
-        {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
+        <h2 className="text-base font-semibold text-white/90 tracking-tight">{title}</h2>
+        {subtitle && <p className="text-sm text-white/40 mt-0.5 leading-relaxed">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ── pillar mini bar (used in score overview) ────────────────── */
+
+function PillarMiniBar({ pillar }: { pillar: PillarResultV2 }) {
+  const s = sc(pillar.score);
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] uppercase tracking-widest text-white/35 truncate">{pillar.name}</p>
+        <p className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: s.hex }}>
+          {pillar.score}<span className="text-white/25 font-normal">/10</span>
+        </p>
+      </div>
+      <div className="h-[2px] rounded-full" style={{ background: "rgba(255,255,255,0.07)" }}>
+        <div className="h-full rounded-full" style={{ width: `${pillar.score * 10}%`, background: s.hex, opacity: 0.7 }} />
       </div>
     </div>
   );
@@ -778,26 +814,30 @@ function FiveSecondCard({
 }: { label: string; score: number; quote: string; finding: string }) {
   const s = sc(score);
   return (
-    <GlowCard className="p-5 flex flex-col gap-3 break-inside-avoid">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-        <div className="flex items-baseline gap-0.5">
-          <span data-score-tier={s.tier} className={cn("text-2xl font-extrabold leading-none tabular-nums", s.cls)}>
+    <PremiumCard className="p-6 flex flex-col gap-4 break-inside-avoid">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">{label}</p>
+        <div className="flex items-baseline gap-0.5 shrink-0">
+          <span className="text-3xl font-light leading-none tabular-nums" style={{ color: s.hex }}>
             {score}
           </span>
-          <span className="text-xs font-medium text-muted-foreground">/10</span>
+          <span className="text-xs text-white/30 mb-0.5">/10</span>
         </div>
       </div>
-      <div className="h-[3px] rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-        <div data-bar-fill={s.tier} className="h-full rounded-full" style={{ width: `${score * 10}%`, background: s.hex }} />
+      <div className="h-[2px] rounded-full" style={{ background: "rgba(255,255,255,0.07)" }}>
+        <div className="h-full rounded-full" style={{ width: `${score * 10}%`, background: s.hex, opacity: 0.65 }} />
       </div>
       {quote && (
-        <blockquote data-print="issue-quote" className="border-l-2 pl-3 italic text-xs text-foreground leading-relaxed" style={{ borderColor: s.hex }}>
+        <blockquote
+          data-print="issue-quote"
+          className="pl-3 italic text-xs text-white/55 leading-relaxed"
+          style={{ borderLeft: `2px solid ${s.hex}55` }}
+        >
           &ldquo;{quote}&rdquo;
         </blockquote>
       )}
-      <p className="text-xs text-muted-foreground leading-relaxed">{finding}</p>
-    </GlowCard>
+      <p className="text-xs text-white/45 leading-relaxed">{finding}</p>
+    </PremiumCard>
   );
 }
 
@@ -818,25 +858,33 @@ function FixCard({
 }) {
   const d = DIFFICULTY[fix.difficulty] ?? DIFFICULTY.medium;
   return (
-    <GlowCard
+    <PremiumCard
       id={annNumber != null ? `audit-ann-${annNumber - 1}` : undefined}
-      className={cn("flex gap-4 items-start px-5 py-4 break-inside-avoid transition-shadow", isHighlighted && "siteiq-highlight")}
+      className={cn("flex gap-5 items-start px-6 py-5 break-inside-avoid", isHighlighted && "siteiq-highlight")}
       style={{ scrollMarginTop: "140px" }}
     >
-      <div data-print="fix-num" className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold text-white" style={{ background: "linear-gradient(135deg,#2563eb,#06b6d4)" }}>
+      <div
+        data-print="fix-num"
+        className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white/70"
+        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+      >
         {index + 1}
       </div>
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <p className="text-sm font-semibold text-foreground leading-snug flex items-center gap-1.5 flex-wrap">
+      <div className="flex-1 min-w-0 space-y-2">
+        <p className="text-sm font-semibold text-white/85 leading-snug flex items-center gap-1.5 flex-wrap">
           {fix.fix}
           {annNumber != null && annType != null && <AnnBadge number={annNumber} type={annType} />}
         </p>
-        <p className="text-xs text-muted-foreground leading-relaxed">{fix.impact}</p>
+        <p className="text-xs text-white/40 leading-relaxed">{fix.impact}</p>
       </div>
-      <span data-difficulty={fix.difficulty} className={cn("shrink-0 self-start mt-0.5 px-2.5 py-1 rounded-full text-[11px] font-semibold", d.cls)}>
+      <span
+        data-difficulty={fix.difficulty}
+        className="shrink-0 self-start mt-0.5 flex items-center gap-1.5 text-[11px] text-white/40"
+      >
+        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: d.dot }} />
         {d.label}
       </span>
-    </GlowCard>
+    </PremiumCard>
   );
 }
 
@@ -897,70 +945,91 @@ function PillarCard({
   }
 
   return (
-    <GlowCard
+    <PremiumCard
       id={annNumber != null ? `audit-ann-${annNumber - 1}` : undefined}
-      className={cn("flex flex-col break-inside-avoid transition-shadow", isHighlighted && "siteiq-highlight")}
+      className={cn("flex flex-col break-inside-avoid", isHighlighted && "siteiq-highlight")}
       style={{ scrollMarginTop: "140px" }}
     >
-      <div className={cn("px-5 py-4 flex items-start justify-between gap-3", s.bgCls)}>
-        <div>
-          <p className={cn("text-[10px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5", s.cls)}>
-            {pillar.name}
-            {annNumber != null && annType != null && <AnnBadge number={annNumber} type={annType} />}
-          </p>
-          <div className="flex items-baseline gap-1">
-            <span data-score-tier={s.tier} className={cn("text-[2.25rem] font-extrabold leading-none tabular-nums", s.cls)}>
-              {pillar.score}
-            </span>
-            <span className="text-sm text-muted-foreground font-medium">/10</span>
+      {/* header */}
+      <div className="px-6 pt-6 pb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35 mb-1 flex items-center gap-1.5">
+              {pillar.name}
+              {annNumber != null && annType != null && <AnnBadge number={annNumber} type={annType} />}
+            </p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-5xl font-light leading-none tabular-nums" style={{ color: s.hex }}>
+                {pillar.score}
+              </span>
+              <span className="text-sm text-white/30 font-normal mb-1">/10</span>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className={cn("px-2.5 py-0.5 rounded-full text-[11px] font-semibold border", s.bgCls, s.cls, s.borderCls)}>
+          <span className="flex items-center gap-1.5 text-[11px] text-white/40 mt-1">
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.hex, opacity: 0.7 }} />
             {s.label}
           </span>
-          <div className="w-20 h-[3px] rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-            <div data-bar-fill={s.tier} className="h-full rounded-full" style={{ width: `${pillar.score * 10}%`, background: s.hex }} />
-          </div>
+        </div>
+        <div className="mt-3 h-[2px] rounded-full" style={{ background: "rgba(255,255,255,0.07)" }}>
+          <div className="h-full rounded-full" style={{ width: `${pillar.score * 10}%`, background: s.hex, opacity: 0.5 }} />
         </div>
       </div>
 
-      <div className="px-5 py-3.5 border-b border-border">
-        <p className="text-sm text-muted-foreground leading-relaxed">{pillar.summary}</p>
+      {/* summary */}
+      <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        <p className="text-sm text-white/55 leading-relaxed">{pillar.summary}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border flex-1">
-        <div className="px-4 py-4 space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Issue Found</p>
+      {/* issue + rewrite */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x" style={{ '--tw-divide-opacity': 1, borderColor: "rgba(255,255,255,0.07)" } as React.CSSProperties}>
+        <div className="px-6 py-5 space-y-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Issue Found</p>
           {pillar.exactIssue ? (
-            <blockquote data-print="issue-quote" className="border-l-2 border-blue-300 dark:border-blue-700 pl-3 text-xs italic text-foreground leading-relaxed">
+            <blockquote
+              data-print="issue-quote"
+              className="pl-3 text-xs italic text-white/55 leading-relaxed"
+              style={{ borderLeft: "2px solid rgba(255,255,255,0.12)" }}
+            >
               &ldquo;{pillar.exactIssue}&rdquo;
             </blockquote>
           ) : (
-            <p className="text-xs text-muted-foreground italic">No specific issue identified.</p>
+            <p className="text-xs text-white/30 italic">No specific issue identified.</p>
           )}
         </div>
-        <div data-print="rewrite-panel" className="px-4 py-4 space-y-2 bg-cyan-50/60 dark:bg-cyan-950/20">
-          <p data-print="rewrite-label" className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+        <div
+          data-print="rewrite-panel"
+          className="px-6 py-5 space-y-2.5"
+          style={{ background: "rgba(255,255,255,0.02)" }}
+        >
+          <p data-print="rewrite-label" className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
             Suggested Rewrite
           </p>
-          <p className="text-xs text-foreground leading-relaxed">{pillar.rewrite || ""}</p>
+          <p className="text-xs text-white/60 leading-relaxed">{pillar.rewrite || ""}</p>
         </div>
       </div>
 
+      {/* benchmark */}
       {pillar.benchmark && (
-        <div className="px-5 py-2.5 border-t border-border bg-muted/30">
-          <p className="text-[11px] text-muted-foreground">
-            <span className="font-semibold text-foreground">Benchmark:</span>{" "}{pillar.benchmark}
+        <div className="px-6 py-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.015)" }}>
+          <p className="text-[11px] text-white/35 leading-relaxed">
+            <span className="text-white/50 font-medium">Benchmark:</span>{" "}{pillar.benchmark}
           </p>
         </div>
       )}
 
-      <div className="px-5 py-3 border-t border-border">
+      {/* fix button */}
+      <div className="px-6 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         <button
           onClick={handleFix}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-teal-500 text-teal-600 dark:text-teal-400 text-sm font-medium hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{
+            border: "1px solid rgba(255,255,255,0.1)",
+            color: "rgba(255,255,255,0.55)",
+            background: "rgba(255,255,255,0.04)",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.18)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.8)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)"; }}
         >
           {loading ? (
             <>
@@ -979,26 +1048,30 @@ function PillarCard({
         </button>
       </div>
 
+      {/* fix results */}
       {fixes && (
-        <div className="px-5 py-4 border-t border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-teal-950/20 space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-teal-600 dark:text-teal-400">Ready to Use</p>
-          <div className="space-y-3">
+        <div className="px-6 py-5 space-y-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Ready to Use</p>
+          <div className="space-y-4">
             {fixes.map((fix, i) => (
-              <div key={i} className="space-y-1.5">
-                <p className="text-xs text-foreground leading-relaxed">{fix.advice}</p>
+              <div key={i} className="space-y-2">
+                <p className="text-xs text-white/55 leading-relaxed">{fix.advice}</p>
                 {fix.copy && (
                   <div className="flex items-start gap-2">
-                    <div className="flex-1 text-xs text-foreground leading-relaxed bg-background rounded-lg px-3 py-2.5 border border-border">
+                    <div
+                      className="flex-1 text-xs text-white/70 leading-relaxed rounded-lg px-3 py-2.5"
+                      style={{ background: "#1a1a24", border: "1px solid rgba(255,255,255,0.07)" }}
+                    >
                       {fix.copy}
                     </div>
                     <button
                       onClick={() => handleCopy(fix.copy, i)}
-                      className={cn(
-                        "shrink-0 mt-0.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium border transition-colors",
-                        copiedIndex === i
-                          ? "border-teal-400 text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30"
-                          : "border-border text-muted-foreground hover:border-teal-400 hover:text-teal-600 dark:hover:text-teal-400",
-                      )}
+                      className="shrink-0 mt-0.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        color: copiedIndex === i ? "#6ee7b7" : "rgba(255,255,255,0.4)",
+                        background: copiedIndex === i ? "rgba(110,231,183,0.06)" : "transparent",
+                      }}
                     >
                       {copiedIndex === i ? "Copied!" : "Copy"}
                     </button>
@@ -1009,7 +1082,7 @@ function PillarCard({
           </div>
         </div>
       )}
-    </GlowCard>
+    </PremiumCard>
   );
 }
 
@@ -1017,13 +1090,11 @@ function PillarCard({
 
 function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: string; screenshot: string | null }) {
   const grade = (audit.overallGrade ?? "F").toUpperCase();
-  const gradeRing = GRADE_RING[grade] ?? "#dc2626";
-  // Sort top-to-bottom, then resolve overlapping boxes so all are visible and numbered sequentially
+  const gColor = gradeColor(grade);
   const rawAnnotations = [...(audit.visualAnnotations ?? [])].sort((a, b) => a.y - b.y);
   const sortedAnnotations = resolveAnnotationOverlaps(rawAnnotations);
   const hasAnnotations = !!(screenshot && sortedAnnotations.length > 0);
 
-  // Build refSection → sorted annotation index map
   const annMap: Record<string, number> = {};
   sortedAnnotations.forEach((ann, i) => {
     if (ann.refSection) annMap[ann.refSection] = i;
@@ -1032,30 +1103,17 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
   function getAnn(refKey: string) {
     const idx = annMap[refKey];
     if (idx === undefined) return { annNumber: null, annType: null };
-    return {
-      annNumber: idx + 1,
-      annType: sortedAnnotations[idx].type,
-    };
+    return { annNumber: idx + 1, annType: sortedAnnotations[idx].type };
   }
 
+  let displayDomain = url;
+  try { displayDomain = new URL(url.startsWith("http") ? url : `https://${url}`).hostname; } catch { /* noop */ }
+
+  const auditDate = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
   return (
-    <div className="min-h-screen print:min-h-0">
-
-      {/* dot matrix background */}
-      <div className="fixed inset-0 pointer-events-none select-none print:hidden" style={{ zIndex: 0 }}>
-        <CanvasRevealEffect
-          animationSpeed={3}
-          containerClassName="bg-[#090909]"
-          colors={[[37, 99, 235], [6, 182, 212]]}
-          opacities={[0.05, 0.05, 0.07, 0.08, 0.08, 0.1, 0.13, 0.13, 0.15, 0.18]}
-          dotSize={3}
-          showGradient={false}
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_40%,transparent_20%,#090909_85%)]" />
-      </div>
-
-      {/* content sits above the fixed background */}
-      <div className="relative" style={{ zIndex: 1 }}>
+    <div className="min-h-screen print:min-h-0" style={{ background: "#0a0a0f" }}>
+      <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
 
       {/* print header */}
       <div className="hidden print:flex items-center justify-between px-8 py-4 border-b border-gray-200 mb-4">
@@ -1069,62 +1127,83 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
       </div>
 
       {/* sticky action bar */}
-      <div className="sticky top-[76px] z-40 bg-background/90 backdrop-blur-sm border-b border-border print:hidden">
+      <div className="sticky top-[76px] z-40 backdrop-blur-md border-b print:hidden" style={{ background: "rgba(10,10,15,0.85)", borderColor: "rgba(255,255,255,0.07)" }}>
         <div className="max-w-5xl mx-auto px-6 h-12 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="shrink-0 w-6 h-6 rounded-full border-[2px] flex items-center justify-center text-[11px] font-extrabold" style={{ borderColor: gradeRing, color: gradeRing }}>
-              {grade}
-            </span>
-            <span className="text-sm text-muted-foreground truncate hidden sm:block">{url}</span>
+            <span className="text-sm font-medium tabular-nums" style={{ color: gColor }}>{grade}</span>
+            <span className="text-white/20">·</span>
+            <span className="text-sm text-white/40 truncate hidden sm:block">{displayDomain}</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">New audit</a>
-            <button className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted transition-colors font-medium cursor-pointer" onClick={() => window.print()}>
+            <a href="/" className="text-xs text-white/40 hover:text-white/70 transition-colors">New audit</a>
+            <button
+              className="text-xs px-3 py-1.5 rounded-md font-medium cursor-pointer transition-colors"
+              style={{ border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.05)" }}
+              onClick={() => window.print()}
+            >
               Export PDF
             </button>
           </div>
         </div>
       </div>
 
-      {/* report header */}
-      <div className="border-b border-border bg-muted/20 print:bg-transparent">
-        <div className="max-w-5xl mx-auto px-6 py-8 print:py-5">
-          <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
-            <div className="shrink-0 flex flex-col items-center gap-1.5">
-              <div data-grade={grade} className="w-20 h-20 rounded-full border-[3px] flex items-center justify-center text-4xl font-extrabold" style={{ borderColor: gradeRing, color: gradeRing }}>
+      {/* score overview header */}
+      <div className="border-b print:bg-transparent" style={{ borderColor: "rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.01)" }}>
+        <div className="max-w-5xl mx-auto px-6 py-12 print:py-6">
+          <div className="flex flex-col sm:flex-row items-start gap-10 sm:gap-16">
+
+            {/* grade block */}
+            <div className="shrink-0">
+              <div data-grade={grade} className="leading-none font-light tabular-nums" style={{ fontSize: 96, color: gColor, lineHeight: 1 }}>
                 {grade}
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Overall Grade</p>
+              <div className="mt-3 space-y-0.5">
+                <p className="text-[10px] uppercase tracking-widest text-white/30 font-medium">Overall Grade</p>
+                <p className="text-sm text-white/50">{displayDomain}</p>
+                <p className="text-xs text-white/25">{auditDate}</p>
+              </div>
+              {audit.revenueImpact && (
+                <div
+                  data-print="revenue"
+                  className="mt-5 rounded-xl px-4 py-3 max-w-[260px]"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  <p className="text-xs text-white/50 leading-relaxed">{audit.revenueImpact}</p>
+                </div>
+              )}
             </div>
 
-            <div className="flex-1 min-w-0 space-y-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Audited Site</p>
-                <p className="text-sm font-medium text-foreground">{url}</p>
+            {/* pillar mini grid 2×3 */}
+            {(audit.pillars?.length ?? 0) > 0 && (
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-widest text-white/25 font-medium mb-5">Pillar Scores</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-5">
+                  {audit.pillars.map((p) => (
+                    <PillarMiniBar key={p.name} pillar={p} />
+                  ))}
+                </div>
+                {audit.classification && (
+                  <div className="flex flex-wrap gap-1.5 mt-8">
+                    {[audit.classification.siteType, audit.classification.targetCustomer, audit.classification.primaryGoal]
+                      .filter(Boolean).map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2.5 py-1 rounded-full text-[11px] text-white/35"
+                          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                  </div>
+                )}
               </div>
-              {audit.classification && (
-                <div className="flex flex-wrap gap-2">
-                  {[audit.classification.siteType, audit.classification.targetCustomer, audit.classification.primaryGoal]
-                    .filter(Boolean).map((tag) => (
-                      <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">{tag}</span>
-                    ))}
-                </div>
-              )}
-              {audit.revenueImpact && (
-                <div data-print="revenue" className="flex items-start gap-2.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 px-4 py-3 max-w-xl">
-                  <svg data-print="revenue-icon" className="shrink-0 mt-0.5 w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-xs font-medium text-cyan-900 dark:text-cyan-200 leading-relaxed">{audit.revenueImpact}</p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* body */}
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-14 print:space-y-10 print:py-6">
+      <div className="max-w-5xl mx-auto px-6 py-16 space-y-20 print:space-y-10 print:py-6">
 
         {/* 01 visual analysis */}
         {hasAnnotations && (
@@ -1205,8 +1284,6 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
           Generated by SiteIQ · siteiqai.com · {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
         </p>
       </div>
-
-      </div>{/* end content wrapper */}
     </div>
   );
 }
@@ -1228,9 +1305,8 @@ function SiteOverview({ pages }: { pages: PageResult[] }) {
   const siteGrade = gpaToGrade(
     pages.reduce((s, p) => s + gradeToGpa(p.audit.overallGrade ?? "F"), 0) / pages.length
   );
-  const siteColor = GRADE_RING[siteGrade] ?? "#dc2626";
+  const siteColor = gradeColor(siteGrade);
 
-  // Biggest wins: first topFix from each page, deduplicated by text prefix, max 3
   type Win = { fix: TopFix; pageUrl: string };
   const seen = new Set<string>();
   const wins: Win[] = [];
@@ -1251,41 +1327,39 @@ function SiteOverview({ pages }: { pages: PageResult[] }) {
   }
 
   return (
-    <div className="min-h-screen print:min-h-0">
+    <div className="min-h-screen print:min-h-0" style={{ background: "#0a0a0f" }}>
+      <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
+
       {/* sticky bar */}
-      <div className="sticky top-[76px] z-40 bg-background/90 backdrop-blur-sm border-b border-border print:hidden">
+      <div className="sticky top-[76px] z-40 backdrop-blur-md border-b print:hidden" style={{ background: "rgba(10,10,15,0.85)", borderColor: "rgba(255,255,255,0.07)" }}>
         <div className="max-w-5xl mx-auto px-6 h-12 flex items-center gap-3">
-          <span className="shrink-0 w-6 h-6 rounded-full border-[2px] flex items-center justify-center text-[11px] font-extrabold" style={{ borderColor: siteColor, color: siteColor }}>
-            {siteGrade}
-          </span>
-          <span className="text-sm text-muted-foreground">Site Overview · {pages.length} pages audited</span>
+          <span className="text-sm font-medium tabular-nums" style={{ color: siteColor }}>{siteGrade}</span>
+          <span className="text-white/20">·</span>
+          <span className="text-sm text-white/40">Site Overview · {pages.length} pages audited</span>
           <div className="flex-1" />
-          <a href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">New audit</a>
+          <a href="/" className="text-xs text-white/40 hover:text-white/70 transition-colors">New audit</a>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-12">
+      <div className="max-w-5xl mx-auto px-6 py-16 space-y-16">
 
         {/* Overall grade */}
-        <div className="flex items-center gap-8">
-          <div className="flex flex-col items-center gap-1.5 shrink-0">
-            <div
-              className="w-24 h-24 rounded-full border-[3px] flex items-center justify-center text-5xl font-extrabold"
-              style={{ borderColor: siteColor, color: siteColor }}
-            >
+        <div className="flex items-start gap-10">
+          <div>
+            <div className="leading-none font-light" style={{ fontSize: 80, color: siteColor, lineHeight: 1 }}>
               {siteGrade}
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Site Grade</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/30 font-medium mt-3">Site Grade</p>
           </div>
-          <div>
-            <p className="text-xl font-bold text-foreground">
+          <div className="pt-2">
+            <p className="text-xl font-semibold text-white/85">
               {siteGrade === "A" ? "Excellent across the board" :
                siteGrade === "B" ? "Strong performance, a few gaps" :
                siteGrade === "C" ? "Room for improvement" :
                siteGrade === "D" ? "Significant issues found" :
                "Critical issues. Act now."}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-white/40 mt-1.5">
               Average across {pages.length} audited page{pages.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -1293,33 +1367,36 @@ function SiteOverview({ pages }: { pages: PageResult[] }) {
 
         {/* Page comparison table */}
         <section>
-          <h2 className="text-lg font-bold text-foreground mb-4">Page Comparison</h2>
-          <div className="rounded-xl border border-border overflow-hidden">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-white/30 mb-5">Page Comparison</h2>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Page</th>
-                  <th className="text-center px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground w-20">Grade</th>
-                  <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Top Issue</th>
+                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
+                  <th className="text-left px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-white/30">Page</th>
+                  <th className="text-center px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-white/30 w-20">Grade</th>
+                  <th className="text-left px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-white/30">Top Issue</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
-                {pages.map((page) => {
-                  const grade = (page.audit.overallGrade ?? "F").toUpperCase();
-                  const color = GRADE_RING[grade] ?? "#dc2626";
+              <tbody>
+                {pages.map((page, idx) => {
+                  const g = (page.audit.overallGrade ?? "F").toUpperCase();
+                  const color = gradeColor(g);
                   const topFix = page.audit.topFixes?.[0];
                   return (
-                    <tr key={page.url} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-5 py-3.5 font-mono text-sm text-foreground">{pagePath(page.url)}</td>
+                    <tr
+                      key={page.url}
+                      className="transition-colors"
+                      style={{
+                        borderTop: idx > 0 ? "1px solid rgba(255,255,255,0.05)" : undefined,
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                    >
+                      <td className="px-5 py-3.5 font-mono text-sm text-white/60">{pagePath(page.url)}</td>
                       <td className="px-4 py-3.5 text-center">
-                        <span
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 text-sm font-extrabold"
-                          style={{ borderColor: color, color }}
-                        >
-                          {grade}
-                        </span>
+                        <span className="text-sm font-medium tabular-nums" style={{ color }}>{g}</span>
                       </td>
-                      <td className="px-5 py-3.5 text-xs text-muted-foreground max-w-xs">
+                      <td className="px-5 py-3.5 text-xs text-white/35 max-w-xs">
                         {topFix ? topFix.fix : ""}
                       </td>
                     </tr>
@@ -1333,28 +1410,29 @@ function SiteOverview({ pages }: { pages: PageResult[] }) {
         {/* Biggest wins */}
         {wins.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-foreground mb-1">Biggest Wins Across Your Site</h2>
-            <p className="text-sm text-muted-foreground mb-4">The highest-impact fixes to prioritize first</p>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-white/30 mb-1.5">Biggest Wins Across Your Site</h2>
+            <p className="text-sm text-white/40 mb-6">The highest-impact fixes to prioritize first</p>
             <div className="space-y-3">
               {wins.map(({ fix, pageUrl }, i) => {
                 const d = DIFFICULTY[fix.difficulty] ?? DIFFICULTY.medium;
                 return (
-                  <div key={i} className="flex gap-4 items-start rounded-xl border border-border bg-card px-5 py-4">
+                  <PremiumCard key={i} className="flex gap-5 items-start px-6 py-5">
                     <div
-                      className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold text-white"
-                      style={{ background: "linear-gradient(135deg,#2563eb,#06b6d4)" }}
+                      className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white/60"
+                      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
                     >
                       {i + 1}
                     </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <p className="text-sm font-semibold text-foreground leading-snug">{fix.fix}</p>
-                      <p className="text-xs text-muted-foreground">{fix.impact}</p>
-                      <p className="text-[11px] text-muted-foreground/60 font-mono">{pagePath(pageUrl)}</p>
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <p className="text-sm font-semibold text-white/85 leading-snug">{fix.fix}</p>
+                      <p className="text-xs text-white/40">{fix.impact}</p>
+                      <p className="text-[11px] text-white/25 font-mono">{pagePath(pageUrl)}</p>
                     </div>
-                    <span className={cn("shrink-0 self-start mt-0.5 px-2.5 py-1 rounded-full text-[11px] font-semibold", d.cls)}>
+                    <span className="shrink-0 self-start mt-0.5 flex items-center gap-1.5 text-[11px] text-white/35">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: d.dot }} />
                       {d.label}
                     </span>
-                  </div>
+                  </PremiumCard>
                 );
               })}
             </div>
@@ -1376,28 +1454,25 @@ function MultiPageView({ pages, url }: { pages: PageResult[]; url: string }) {
 
   return (
     <div>
-      {/* Tab bar */}
-      <div className="sticky top-[76px] z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+      <div className="sticky top-[76px] z-40 backdrop-blur-md border-b" style={{ background: "rgba(10,10,15,0.92)", borderColor: "rgba(255,255,255,0.07)" }}>
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex items-center gap-1 overflow-x-auto py-0 hide-scrollbar">
-            {/* Site Overview tab */}
             <button
               type="button"
               onClick={() => setActiveTab(0)}
               className={cn(
                 "shrink-0 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                 activeTab === 0
-                  ? "border-cyan-500 text-cyan-400"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  ? "border-white/40 text-white/80"
+                  : "border-transparent text-white/35 hover:text-white/60"
               )}
             >
               Site Overview
             </button>
 
-            {/* Per-page tabs */}
             {pages.map((page, i) => {
-              const grade = (page.audit.overallGrade ?? "F").toUpperCase();
-              const color = GRADE_RING[grade] ?? "#dc2626";
+              const g = (page.audit.overallGrade ?? "F").toUpperCase();
+              const color = gradeColor(g);
               return (
                 <button
                   key={page.url}
@@ -1406,17 +1481,12 @@ function MultiPageView({ pages, url }: { pages: PageResult[]; url: string }) {
                   className={cn(
                     "shrink-0 flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                     activeTab === i + 1
-                      ? "border-cyan-500 text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "border-white/40 text-white/80"
+                      : "border-transparent text-white/35 hover:text-white/60"
                   )}
                 >
                   <span className="font-mono">{tabLabel(page.url)}</span>
-                  <span
-                    className="text-[10px] font-bold leading-none w-5 h-5 rounded-full border flex items-center justify-center"
-                    style={{ borderColor: color, color }}
-                  >
-                    {grade}
-                  </span>
+                  <span className="text-[10px] font-semibold tabular-nums" style={{ color }}>{g}</span>
                 </button>
               );
             })}
@@ -1424,7 +1494,6 @@ function MultiPageView({ pages, url }: { pages: PageResult[]; url: string }) {
         </div>
       </div>
 
-      {/* Tab content */}
       {activeTab === 0 ? (
         <SiteOverview pages={pages} />
       ) : (
@@ -1444,12 +1513,9 @@ export default function ResultsClient({ url, urls }: { url: string; urls?: strin
   const isMultiPage = !!urls;
 
   const [phase, setPhase] = useState<"loading" | "results" | "error">("loading");
-  // Single-page state
   const [audit, setAudit] = useState<AuditResultV2 | null>(null);
   const [screenshot, setScreenshot] = useState<string | null>(null);
-  // Multi-page state
   const [pages, setPages] = useState<PageResult[]>([]);
-  // Shared loading state
   const [errorMsg, setErrorMsg] = useState("");
   const [progress, setProgress] = useState(5);
   const [statusMsg, setStatusMsg] = useState("Connecting…");
@@ -1505,14 +1571,12 @@ export default function ResultsClient({ url, urls }: { url: string; urls?: strin
               setProgress((p) => Math.min(p + 30, 85));
             }
           } else if (msg.type === "result" && msg.data) {
-            // Single-page result
             const snap = msg.screenshot ?? null;
             setProgress(100);
             setTimeout(() => {
               if (!cancelled) { setAudit(msg.data); setScreenshot(snap); setPhase("results"); }
             }, 500);
           } else if (msg.type === "page_result" && msg.data) {
-            // Multi-page: accumulate results
             const result: PageResult = { url: msg.url, audit: msg.data, screenshot: msg.screenshot ?? null };
             if (!cancelled) setPages((prev) => [...prev, result]);
             setProgress(Math.round(((msg.pageIndex + 1) / msg.total) * 95));
@@ -1534,12 +1598,13 @@ export default function ResultsClient({ url, urls }: { url: string; urls?: strin
 
   if (phase === "error") {
     return (
-      <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6">
+      <div className="min-h-[calc(100vh-76px)] flex items-center justify-center px-6" style={{ background: "#0a0a0f" }}>
+        <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
         <div className="flex flex-col items-center gap-4 text-center max-w-sm">
-          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500 font-bold text-xl">×</div>
-          <h2 className="text-lg font-semibold">Audit failed</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">{errorMsg}</p>
-          <a href="/" className="text-sm text-blue-500 hover:underline">← Try another URL</a>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[#f87171] font-bold text-xl" style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.15)" }}>×</div>
+          <h2 className="text-lg font-semibold text-white/80">Audit failed</h2>
+          <p className="text-sm text-white/40 leading-relaxed">{errorMsg}</p>
+          <a href="/" className="text-sm text-white/50 hover:text-white/80 transition-colors">← Try another URL</a>
         </div>
       </div>
     );
