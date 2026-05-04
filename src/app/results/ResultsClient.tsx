@@ -1124,9 +1124,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
             animationSpeed={3}
             containerClassName="bg-black"
             colors={[[37, 99, 235], [6, 182, 212]]}
-            dotSize={4}
-            totalSize={28}
-            opacities={[0.03, 0.05, 0.08, 0.10, 0.13, 0.16, 0.20, 0.24, 0.27, 0.30]}
+            dotSize={6}
             reverse={false}
             showGradient={false}
           />
