@@ -1118,19 +1118,21 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
       <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
 
       {/* animated dot matrix background — same setup as sign-in page */}
-      <div className="absolute inset-0 z-0 pointer-events-none select-none print:hidden">
-        <CanvasRevealEffect
-          animationSpeed={3}
-          containerClassName="bg-black"
-          colors={[[37, 99, 235], [6, 182, 212]]}
-          dotSize={4}
-          totalSize={28}
-          opacities={[0.03, 0.05, 0.08, 0.10, 0.13, 0.16, 0.20, 0.24, 0.27, 0.30]}
-          reverse={false}
-          showGradient={false}
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,0,0,1)_0%,_transparent_100%)]" />
-        <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-black to-transparent" />
+      <div className="absolute inset-0 z-0 pointer-events-none select-none print:hidden" style={{ height: "100%" }}>
+        <div className="relative w-full h-full">
+          <CanvasRevealEffect
+            animationSpeed={3}
+            containerClassName="bg-black"
+            colors={[[37, 99, 235], [6, 182, 212]]}
+            dotSize={4}
+            totalSize={28}
+            opacities={[0.03, 0.05, 0.08, 0.10, 0.13, 0.16, 0.20, 0.24, 0.27, 0.30]}
+            reverse={false}
+            showGradient={false}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,0,0,0.85)_0%,_transparent_100%)]" />
+          <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-black to-transparent" />
+        </div>
       </div>
 
       <div className="relative" style={{ zIndex: 1 }}>
