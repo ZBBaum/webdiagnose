@@ -1094,20 +1094,6 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
   const gColor = gradeColor(grade);
   const rawAnnotations = [...(audit.visualAnnotations ?? [])].sort((a, b) => a.y - b.y);
 
-  // Derive dot colors from actual pillar scores
-  const tierColorMap: Record<string, [number, number, number]> = {
-    good:     [110, 231, 183],
-    warning:  [215, 119, 6],
-    critical: [248, 113, 113],
-  };
-  const presentTiers = [...new Set((audit.pillars ?? []).map(p => sc(p.score).tier))];
-  const dotColors: [number, number, number][] = presentTiers.length > 0
-    ? presentTiers.map(t => tierColorMap[t])
-    : [[37, 99, 235]];
-  const total = Math.max(audit.pillars?.length ?? 0, 1);
-  const goodPct = (audit.pillars ?? []).filter(p => sc(p.score).tier === "good").length / total;
-  const warnPct = (audit.pillars ?? []).filter(p => sc(p.score).tier === "warning").length / total;
-  const critPct = (audit.pillars ?? []).filter(p => sc(p.score).tier === "critical").length / total;
   const sortedAnnotations = resolveAnnotationOverlaps(rawAnnotations);
   const hasAnnotations = !!(screenshot && sortedAnnotations.length > 0);
 
@@ -1131,29 +1117,18 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
     <div className="relative min-h-screen print:min-h-0" style={{ background: "#090909" }}>
       <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
 
-      {/* dot matrix — absolute so R3F canvas sizes correctly */}
-      <div className="absolute inset-0 z-0 pointer-events-none select-none print:hidden overflow-hidden">
+      {/* animated dot matrix background — same setup as sign-in page */}
+      <div className="absolute inset-0 z-0 pointer-events-none select-none print:hidden">
         <CanvasRevealEffect
           animationSpeed={3}
-          containerClassName="bg-[#090909]"
-          colors={dotColors}
-          opacities={[0.05, 0.05, 0.07, 0.08, 0.08, 0.1, 0.13, 0.13, 0.15, 0.18]}
-          dotSize={3}
+          containerClassName="bg-black"
+          colors={[[37, 99, 235], [6, 182, 212]]}
+          dotSize={6}
+          reverse={false}
           showGradient={false}
         />
-        {goodPct > 0 && (
-          <div className="absolute" style={{ top: "-5%", right: "-5%", width: "55%", height: "55%",
-            background: `radial-gradient(ellipse at center, rgba(110,231,183,${(goodPct * 0.12).toFixed(3)}) 0%, transparent 70%)` }} />
-        )}
-        {warnPct > 0 && (
-          <div className="absolute" style={{ top: "25%", left: "-5%", width: "50%", height: "55%",
-            background: `radial-gradient(ellipse at center, rgba(215,119,6,${(warnPct * 0.12).toFixed(3)}) 0%, transparent 70%)` }} />
-        )}
-        {critPct > 0 && (
-          <div className="absolute" style={{ bottom: "5%", right: "5%", width: "50%", height: "45%",
-            background: `radial-gradient(ellipse at center, rgba(248,113,113,${(critPct * 0.12).toFixed(3)}) 0%, transparent 70%)` }} />
-        )}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_40%,transparent_20%,#090909_85%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,0,0,1)_0%,_transparent_100%)]" />
+        <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-black to-transparent" />
       </div>
 
       <div className="relative" style={{ zIndex: 1 }}>
