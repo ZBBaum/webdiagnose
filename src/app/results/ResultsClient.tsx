@@ -1135,7 +1135,7 @@ function ResultsView({ audit, url, screenshot }: { audit: AuditResultV2; url: st
         </div>
       </div>
 
-      <div className="relative" style={{ zIndex: 1 }}>
+      <div className="relative z-10">
 
       {/* print header */}
       <div className="hidden print:flex items-center justify-between px-8 py-4 border-b border-gray-200 mb-4">
