@@ -27,7 +27,9 @@ export async function saveAudit(
   };
   if (sessionId) payload.session_id = sessionId;
 
+  console.log("[SiteIQ] saveAudit insert payload keys:", Object.keys(payload), "url:", url, "userId:", userId ?? "anon");
   const { data, error } = await supabaseAdmin.from("audits").insert(payload).select("id").single();
+  console.log("[SiteIQ] saveAudit result — id:", data?.id ?? null, "error:", error ? `${error.code} ${error.message}` : null);
   if (error) throw new Error(error.message);
   return data.id as string;
 }
