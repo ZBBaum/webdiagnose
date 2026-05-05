@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SiteIQLogo from "@/components/SiteIQLogo";
+import type { Tier } from "@/app/results/ResultsClient";
 
-const MAX_PAGES = 10;
+const TIER_MAX_PAGES: Record<Tier, number> = { free: 1, pro: 10, agency: 25 };
 
 const IMPORTANT_PATHS = [
   "/pricing", "/price", "/plans",
@@ -35,7 +36,8 @@ function pathLabel(url: string): string {
 type DiscoveredPage = { url: string; title: string };
 type PageItem = { url: string; path: string; title: string };
 
-export default function SelectClient({ url }: { url: string }) {
+export default function SelectClient({ url, tier = "free" }: { url: string; tier?: Tier }) {
+  const MAX_PAGES = TIER_MAX_PAGES[tier];
   const [discovering, setDiscovering] = useState(true);
   const [pages, setPages] = useState<PageItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -103,7 +105,13 @@ export default function SelectClient({ url }: { url: string }) {
       className="min-h-[calc(100vh-76px)] flex items-center justify-center px-4 py-12"
       style={{ background: "#090909" }}
     >
-      <div className="w-full max-w-lg">
+      <style>{`
+        @keyframes spinner-glow {
+          0%, 100% { box-shadow: 0 0 6px 2px rgba(6,182,212,0.2); }
+          50% { box-shadow: 0 0 18px 5px rgba(6,182,212,0.6); }
+        }
+      `}</style>
+      <div className="w-full max-w-lg" style={{ marginTop: -50 }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <SiteIQLogo size={32} />
@@ -116,7 +124,10 @@ export default function SelectClient({ url }: { url: string }) {
         {/* Discovery loading */}
         {discovering && (
           <div className="rounded-2xl border border-white/8 bg-white/3 p-8 flex flex-col items-center gap-4 text-center">
-            <div className="w-8 h-8 rounded-full border-2 border-cyan-500/30 border-t-cyan-500 animate-spin" />
+            <div
+              className="w-8 h-8 rounded-full border-2 border-cyan-500/30 border-t-cyan-500 animate-spin"
+              style={{ animation: "spin 0.75s linear infinite, spinner-glow 2.2s ease-in-out infinite" }}
+            />
             <div>
               <p className="text-sm font-medium text-white/80">Discovering pages…</p>
               <p className="text-xs text-white/40 mt-1">Scanning internal links on {hostname}</p>
@@ -212,8 +223,26 @@ export default function SelectClient({ url }: { url: string }) {
             {/* Selection count + limit note */}
             <div className="flex items-center justify-between text-xs text-white/35 px-1">
               <span>{selected.size} of {Math.min(pages.length, MAX_PAGES)} selected</span>
-              <span>Pro: up to 5 pages · Agency: up to 10 pages</span>
+              {tier === "free"
+                ? <span>Free: 1 page · <a href="/pricing" className="text-cyan-500/70 hover:text-cyan-400 transition-colors">Upgrade for more</a></span>
+                : <span>Pro: up to 10 pages · Agency: up to 25 pages</span>
+              }
             </div>
+
+            {/* Upgrade prompt for free users trying to select multiple pages */}
+            {tier === "free" && (
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-4 py-3 flex items-center justify-between gap-4">
+                <p className="text-xs text-white/55 leading-relaxed">
+                  Multi-page audits require Pro. Upgrade to audit up to 10 pages at once.
+                </p>
+                <a
+                  href="/pricing"
+                  className="shrink-0 text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors whitespace-nowrap"
+                >
+                  Upgrade to Pro →
+                </a>
+              </div>
+            )}
 
             {/* Start Audit */}
             <button

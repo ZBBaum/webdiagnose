@@ -1,5 +1,6 @@
 import chromium from "@sparticuz/chromium-min";
 import puppeteer from "puppeteer-core";
+import sharp from "sharp";
 
 export interface ElementMapEntry {
   text: string;
@@ -163,8 +164,10 @@ export async function discoverLinks(homeUrl: string): Promise<DiscoveredPage[]> 
 }
 
 export async function scrapePage(url: string): Promise<ScrapedPage> {
+  const t0 = Date.now();
   const options = await getLaunchOptions();
   const browser = await puppeteer.launch(options);
+  console.log(`[scraper] browser launch: ${Date.now() - t0}ms`);
   const page = await browser.newPage();
   await page.setUserAgent(
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -174,6 +177,7 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
 
   try {
     await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+    console.log(`[scraper] page.goto: ${Date.now() - t0}ms`);
 
     const pageText = await page.evaluate(
       () => document.body?.innerText?.toLowerCase() ?? ""
@@ -312,6 +316,7 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
       };
     });
 
+    console.log(`[scraper] DOM scrape: ${Date.now() - t0}ms`);
     // Cap page height to avoid Claude token limits, then screenshot
     let screenshotBase64: string | null = null;
     let elementMap: ElementMapEntry[] = [];
@@ -366,14 +371,18 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
 
           return entries.slice(0, 120);
         });
-        console.log(`[scraper] element map: ${elementMap.length} entries`);
+        console.log(`[scraper] element map: ${elementMap.length} entries (${Date.now() - t0}ms)`);
       } catch (mapErr) {
         console.warn("[scraper] element map extraction failed:", mapErr instanceof Error ? mapErr.message : mapErr);
       }
 
-      const buf = await page.screenshot({ fullPage: true, type: "png" });
-      screenshotBase64 = Buffer.from(buf).toString("base64");
-      console.log(`[scraper] screenshot captured, base64 size: ${Math.round(screenshotBase64.length / 1024)}KB`);
+      const rawBuf = await page.screenshot({ fullPage: true, type: "png" });
+      const compressed = await sharp(rawBuf)
+        .resize({ width: 1280, withoutEnlargement: true })
+        .jpeg({ quality: 65 })
+        .toBuffer();
+      screenshotBase64 = compressed.toString("base64");
+      console.log(`[scraper] screenshot: ${Math.round(screenshotBase64.length / 1024)}KB (${Date.now() - t0}ms)`);
     } catch (err) {
       console.warn("[scraper] screenshot failed:", err instanceof Error ? err.message : err);
     }

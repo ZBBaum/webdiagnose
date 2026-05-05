@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabaseAdmin } from "./supabase-service";
 import type { AuditResultV2 } from "./auditor";
 
 export type AuditRecord = {
@@ -15,23 +15,25 @@ export async function saveAudit(
   userId?: string | null,
   screenshotBase64?: string | null,
   sessionId?: string | null
-): Promise<void> {
+): Promise<string> {
   const payload: Record<string, unknown> = {
     url,
     overall_grade: audit.overallGrade,
     pillar_scores: audit.pillars,
+    full_result: audit,
     user_id: userId ?? null,
     screenshot_base64: screenshotBase64 ?? null,
     visual_annotations: audit.visualAnnotations ?? null,
   };
   if (sessionId) payload.session_id = sessionId;
 
-  const { error } = await supabase.from("audits").insert(payload);
+  const { data, error } = await supabaseAdmin.from("audits").insert(payload).select("id").single();
   if (error) throw new Error(error.message);
+  return data.id as string;
 }
 
 export async function getAuditHistory(userId: string): Promise<AuditRecord[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("audits")
     .select("*")
     .eq("user_id", userId)

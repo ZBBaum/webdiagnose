@@ -15,7 +15,7 @@ export async function createSupabaseServer() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Server components cannot set cookies — safe to ignore
+            // Server components cannot set cookies, safe to ignore
           }
         },
       },

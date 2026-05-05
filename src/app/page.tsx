@@ -46,7 +46,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 const HOW_STEPS = [
   { icon: Link2,    step: "1", title: "Paste your URL",    desc: "Drop any page URL into the box. No login, no browser extension, no waiting." },
-  { icon: BarChart3, step: "2", title: "Get your grade",   desc: "AI analyzes 6 conversion pillars and returns a letter grade in ~30 seconds." },
+  { icon: BarChart3, step: "2", title: "Get your grade",   desc: "AI analyzes 6 conversion pillars and returns a letter grade in under 2 minutes." },
   { icon: Wrench,   step: "3", title: "Fix what's broken", desc: "Each pillar comes with ranked, actionable fixes so you know exactly what to tackle first." },
 ];
 
@@ -87,6 +87,14 @@ const MOCK_PILLARS = [
   { name: "Friction",      score: 8.3 },
   { name: "Mobile",        score: 9.2 },
 ].map(p => ({ ...p, color: scoreHex(p.score) }));
+
+const COMPARISON_ROWS = [
+  { agency: "Needs months of traffic data",  siteiq: "Works on any site instantly" },
+  { agency: "Charges $3,000 to $15,000",     siteiq: "$19.99/mo" },
+  { agency: "Redesigns your pages",          siteiq: "Rewrites your copy that actually converts" },
+  { agency: "Takes weeks to deliver",        siteiq: "Deep analysis in 90 seconds" },
+  { agency: "Generic recommendations",       siteiq: "Quotes your exact broken elements and rewrites them" },
+];
 
 const PLANS = [
   {
@@ -180,7 +188,7 @@ function AuditCardMockup() {
     <div className="relative w-full max-w-[420px]">
       {/* glow */}
       <div className="absolute inset-0 bg-blue-600/20 rounded-3xl blur-[70px] scale-90 translate-y-4" />
-      {/* float wrapper — pauses when mouse is over card */}
+      {/* float wrapper, pauses when mouse is over card */}
       <div
         className="animate-float-card"
         style={{ animationPlayState: hovered ? "paused" : "running" }}
@@ -314,11 +322,12 @@ export default function Home() {
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
                 className="text-5xl sm:text-6xl lg:text-[4.25rem] font-bold tracking-[-0.04em] leading-[1.04] text-white"
               >
-                Turn visitors<br />
-                into{" "}
+                Your website.<br />
+                The way your{" "}
                 <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  customers.
-                </span>
+                  customers
+                </span>{" "}
+                actually see it.
               </motion.h1>
 
               {/* subtext */}
@@ -328,7 +337,7 @@ export default function Home() {
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.16 }}
                 className="text-[17px] text-gray-400 leading-relaxed max-w-md"
               >
-                Paste any URL and get a deep CRO audit across 6 conversion pillars in under 30 seconds, no account needed.
+                Most website owners are too close to their own site to see what&apos;s broken. SiteIQ reads your page like a first-time visitor and tells you exactly what&apos;s costing you customers - and how to fix it.
               </motion.p>
 
               {/* input */}
@@ -364,7 +373,7 @@ export default function Home() {
                   </form>
                 </div>
                 <p className="mt-3 text-[11px] text-gray-600 tracking-wide uppercase">
-                  Free · No credit card · Results in ~30 seconds
+                  Deep AI analysis. Usually under 90 seconds.
                 </p>
               </motion.div>
 
@@ -382,6 +391,44 @@ export default function Home() {
 
           </div>
         </div>
+      </section>
+
+      <Divider />
+
+      {/* ── WHY SITEIQ ────────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-28">
+        <FadeIn className="flex flex-col items-center text-center gap-4 mb-16">
+          <SectionLabel>Why SiteIQ</SectionLabel>
+          <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.03em] text-white">
+            Agency or SiteIQ?<br />You do the math.
+          </h2>
+        </FadeIn>
+
+        <FadeIn>
+          <div className="rounded-2xl border border-white/10 overflow-hidden">
+            {/* header row */}
+            <div className="grid grid-cols-2">
+              <div className="px-8 py-5 border-b border-r border-white/10 bg-white/[0.02]">
+                <p className="text-sm font-semibold text-gray-500">Traditional CRO Agency</p>
+              </div>
+              <div className="px-8 py-5 border-b border-white/10 bg-cyan-500/5">
+                <p className="text-sm font-semibold text-cyan-400">SiteIQ</p>
+              </div>
+            </div>
+            {/* data rows */}
+            {COMPARISON_ROWS.map(({ agency, siteiq }, i) => (
+              <div key={i} className="grid grid-cols-2">
+                <div className={`px-8 py-5 border-r border-white/8 flex items-center ${i < COMPARISON_ROWS.length - 1 ? "border-b" : ""}`}>
+                  <p className="text-sm text-gray-500">{agency}</p>
+                </div>
+                <div className={`px-8 py-5 flex items-center gap-3 bg-cyan-500/[0.03] ${i < COMPARISON_ROWS.length - 1 ? "border-b border-white/8" : ""}`}>
+                  <Check className="size-4 text-cyan-500 shrink-0" strokeWidth={2.5} />
+                  <p className="text-sm font-medium" style={{ color: "#06b6d4" }}>{siteiq}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
       </section>
 
       <Divider />
@@ -462,7 +509,7 @@ export default function Home() {
             See what a real audit looks like
           </h2>
           <p className="text-gray-400 max-w-sm leading-relaxed">
-            Here&apos;s a sample report for example.com. Exactly what you get in 30 seconds.
+            Here&apos;s a sample report for example.com. Exactly what you get in under 2 minutes.
           </p>
         </FadeIn>
 
@@ -612,13 +659,13 @@ export default function Home() {
         </div>
         <FadeIn className="relative z-10 flex flex-col items-center text-center gap-8 max-w-xl mx-auto">
           <h2 className="text-5xl sm:text-6xl font-bold tracking-[-0.04em] leading-[1.05] text-white">
-            Ready to fix<br />
+            Stop guessing why<br />
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              your website?
+              visitors aren&apos;t converting.
             </span>
           </h2>
           <p className="text-gray-400 text-lg leading-relaxed max-w-sm">
-            Run your first free audit in under 30 seconds. No account needed.
+            Paste your URL and find out in 90 seconds.
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

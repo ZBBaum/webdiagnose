@@ -6,8 +6,13 @@ const PLANS = [
     variant: "free" as const,
     name: "Free",
     price: null,
-    description: "Try it out, no strings attached.",
-    features: ["1 audit per day", "Single page per audit", "No history saved"],
+    description: "Try it free, no account needed.",
+    features: [
+      "1 audit per day",
+      "Single page audit",
+      "Visual annotations",
+      "Score history (7 days)",
+    ],
     cta: "Get started free",
     href: "/",
   },
@@ -15,12 +20,14 @@ const PLANS = [
     variant: "pro" as const,
     name: "Pro",
     price: "19.99",
-    description: "For founders and marketers serious about conversion.",
+    description: "Stop guessing why visitors leave.",
     features: [
       "10 audits per day",
-      "Full site audit",
-      "Score history",
+      "Multi-page audit up to 10 pages",
+      "Visual annotations",
+      "Score history (unlimited)",
       "PDF export",
+      "Fix this for me on all pillars",
     ],
     cta: "Start Pro — $19.99/mo",
     href: "/api/checkout?plan=pro",
@@ -29,12 +36,16 @@ const PLANS = [
     variant: "agency" as const,
     name: "Agency",
     price: "49.99",
-    description: "Built for teams running audits at scale.",
+    description: "Run audits for all your clients, look like the expert.",
     features: [
-      "Unlimited audits",
-      "White-label PDF reports",
-      "Team seats",
-      "Priority support",
+      "Unlimited audits per day",
+      "Multi-page audit up to 25 pages",
+      "Visual annotations",
+      "Score history (unlimited)",
+      "PDF export",
+      "Fix this for me on all pillars",
+      "Auto scheduled re-audits (coming soon)",
+      "Competitor comparison (coming soon)",
     ],
     cta: "Start Agency — $49.99/mo",
     href: "/api/checkout?plan=agency",
@@ -101,6 +112,7 @@ export default function PricingPage() {
                 )}>
                   {plan.name}
                 </p>
+
                 <div className="flex items-baseline gap-1">
                   {plan.price !== null ? (
                     <>
@@ -119,6 +131,7 @@ export default function PricingPage() {
                     <span className="text-4xl font-extrabold text-foreground">Free</span>
                   )}
                 </div>
+
                 <p className={cn(
                   "text-xs leading-relaxed pt-0.5",
                   isAgency ? "text-white/60" : "text-muted-foreground"
